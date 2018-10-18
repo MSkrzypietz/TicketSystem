@@ -97,7 +97,7 @@ jedem Request alle Dateien neu eingelesen werden.
 ## Konfiguration
 37. Die Konfiguration soll komplett uber Startparameter erfolgen. (Siehe Package flag)
 38. Der Port muss sich uber ein Flag festlegen lassen. 
-39. Hart kodierte“ absolute Pfade sind nicht erlaubt.
+39. Hart kodierte absolute Pfade sind nicht erlaubt.
 ## Betrieb
 40. Wird die Anwendung ohne Argumente gestartet, soll ein sinnvoller default gewählt werden.
 41. Nicht vorhandene aber ben¨otigte Order sollen ggfls. angelegt werden.
@@ -109,8 +109,18 @@ Optionale Anforderungen
 ## Urlaubsmodus
 43. Ein Bearbeiter kann sich in einem ”Urlaubsmodus“ befinden.
 44. Ist ein Bearbeiter in diesem Modus, kann ihm kein Ticket zugeteilt werden.
-## Zusammenfuhren von Tickets 
+## Zusammenführen von Tickets 
 45. Es soll möglich sein zwei Tickets zu einem Ticket zu verschmelzen.
 46. Dabei sollen einem Ticket alle Einträge eines zweiten Tickets hinzugefugt werden.
 47. Das zweite Ticket soll danach gelöscht werden.
 48. Möglich soll dieser Vorgang nur sein, wenn beide Tickets den selben Bearbeiter haben.
+# Optionale Anforderungen
+## Urlaubsmodus
+49. Ein Bearbeiter kann sich in einem ”
+Urlaubsmodus“ befinden.
+50. Ist ein Bearbeiter in diesem Modus, kann ihm kein Ticket zugeteilt werden.
+## Zusammenführen von Tickets 
+51. Es soll möglich sein zwei Tickets zu einem Ticket zu verschmelzen.
+52. Dabei sollen einem Ticket alle Einträge eines zweiten Tickets hinzugefugt werden.
+53. Das zweite Ticket soll danach gelöscht werden.
+54. Möglich soll dieser Vorgang nur sein, wenn beide Tickets den selben Bearbeiterhaben.
