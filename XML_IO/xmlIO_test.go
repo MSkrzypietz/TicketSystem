@@ -3,9 +3,9 @@ package XML_IO
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"strconv"
-	"testify-master/assert"
 	"testing"
 )
 
