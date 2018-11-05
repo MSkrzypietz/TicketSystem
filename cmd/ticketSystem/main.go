@@ -1,5 +1,7 @@
 package main
 
-func main() {
+import "TicketSystem/webserver"
 
+func main() {
+	webserver.StartServer()
 }
