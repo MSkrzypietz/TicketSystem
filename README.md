@@ -105,22 +105,13 @@ jedem Request alle Dateien neu eingelesen werden.
 unterstutzen, es kann jedoch davon ausgegangen werden, dass geeignete Zertifikate gestellt werden. Fur Ihre Tests können Sie ein 
 "self signed“ Zertifikat verwenden. Es ist nicht erforderlich zur Laufzeit Zertifikate zu erstellen
 o.ä.. Ebenso ist keine Let’s Encrypt Anbindung erforderlich.
-Optionale Anforderungen
+# Optionale Anforderungen
 ## Urlaubsmodus
-43. Ein Bearbeiter kann sich in einem ”Urlaubsmodus“ befinden.
+43. Ein Bearbeiter kann sich in einem ”
+Urlaubsmodus“ befinden.
 44. Ist ein Bearbeiter in diesem Modus, kann ihm kein Ticket zugeteilt werden.
 ## Zusammenführen von Tickets 
 45. Es soll möglich sein zwei Tickets zu einem Ticket zu verschmelzen.
 46. Dabei sollen einem Ticket alle Einträge eines zweiten Tickets hinzugefugt werden.
 47. Das zweite Ticket soll danach gelöscht werden.
-48. Möglich soll dieser Vorgang nur sein, wenn beide Tickets den selben Bearbeiter haben.
-# Optionale Anforderungen
-## Urlaubsmodus
-49. Ein Bearbeiter kann sich in einem ”
-Urlaubsmodus“ befinden.
-50. Ist ein Bearbeiter in diesem Modus, kann ihm kein Ticket zugeteilt werden.
-## Zusammenführen von Tickets 
-51. Es soll möglich sein zwei Tickets zu einem Ticket zu verschmelzen.
-52. Dabei sollen einem Ticket alle Einträge eines zweiten Tickets hinzugefugt werden.
-53. Das zweite Ticket soll danach gelöscht werden.
-54. Möglich soll dieser Vorgang nur sein, wenn beide Tickets den selben Bearbeiterhaben.
+48. Möglich soll dieser Vorgang nur sein, wenn beide Tickets den selben Bearbeiterhaben.
