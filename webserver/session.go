@@ -11,7 +11,7 @@ import (
 )
 
 func RealUser(username string) bool {
-	users, err := ReadTxtFile("/users.txt")
+	users, err := ReadTxtFile("webserver//users.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -27,7 +27,7 @@ func RealUser(username string) bool {
 }
 
 func CheckUser(username string, password string) bool {
-	users, err := ReadTxtFile("/users.txt")
+	users, err := ReadTxtFile("webserver/users.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -43,7 +43,7 @@ func CheckUser(username string, password string) bool {
 }
 
 func StartSession(w http.ResponseWriter, username string) {
-	f, err := os.OpenFile("session_id.txt", os.O_APPEND|os.O_WRONLY, 0600)
+	f, err := os.OpenFile("webserver/session_id.txt", os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +77,7 @@ func DestroySession(r *http.Request) {
 func GetUserFromCookie(r *http.Request) string {
 	cookie, err := r.Cookie("session-id")
 	if err == nil {
-		sessionsFile, err := os.Open("session_id.txt")
+		sessionsFile, err := os.Open("webserver/session_id.txt")
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"TicketSystem/config"
-	"Ticketsystem_own/webserver"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -55,7 +54,7 @@ func ServeLogin(w http.ResponseWriter, r *http.Request) {
 		name := r.PostFormValue("name")
 		password := r.PostFormValue("password")
 
-		validUser := webserver.CheckUser(name, password)
+		validUser := CheckUser(name, password)
 
 		if validUser {
 			fmt.Fprintf(w, "Hello, you're successfully logged in!")
