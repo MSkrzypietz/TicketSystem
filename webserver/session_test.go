@@ -25,3 +25,9 @@ func TestRealUser(t *testing.T) {
 	assert.True(t, RealUser("Test"))
 	assert.False(t, RealUser("FalseUser"))
 }
+
+func TestReadTxtFile(t *testing.T) {
+	result, err := ReadTxtFile("users.txt")
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+}
