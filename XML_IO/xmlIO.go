@@ -20,11 +20,17 @@ type Ticket struct {
 	MessageList []Message `xml:"MessageList>Message"`
 }
 
-//strcut that defines a message with the parameters date of creation, name or mail of the actor and the text of the message
+//struct that defines a message with the parameters date of creation, name or mail of the actor and the text of the message
 type Message struct {
 	CreationDate time.Time `xml:"CreationDate"`
 	Actor        string    `xml:"Actor"`
-	Text         string    `xml:Text`
+	Text         string    `xml:"Text"`
+}
+
+type User struct {
+	Username  string `xml:"Username"`
+	Password  string `xml:"Password"`
+	SessionID string `xml:"SessionID"`
 }
 
 var ticketMap map[int]Ticket = make(map[int]Ticket)
@@ -59,7 +65,7 @@ func readTicket(id int) Ticket {
 	}
 
 	//returns ticket from the XML-file and stores it to the cache
-	file, err := ioutil.ReadFile("tickets/ticket" + strconv.Itoa(id) + ".xml")
+	file, err := ioutil.ReadFile("../data/tickets/ticket" + strconv.Itoa(id) + ".xml")
 	if err != nil {
 		return Ticket{}
 	}
@@ -76,7 +82,7 @@ func deleteTicket(id int) bool {
 	if id == getTicketIDCounter() {
 		writeToXML(id-1, "definitions")
 	}
-	err := os.Remove("tickets/ticket" + strconv.Itoa(id) + ".xml")
+	err := os.Remove("../data/tickets/ticket" + strconv.Itoa(id) + ".xml")
 	if err != nil {
 		return false
 	}
@@ -163,7 +169,7 @@ func writeToXML(v interface{}, file string) bool {
 func clearCache() bool {
 	tmpBool := true
 	for e := range ticketMap {
-		tmpBool = tmpBool && writeToXML(ticketMap[e], "tickets/ticket"+strconv.Itoa(ticketMap[e].Id))
+		tmpBool = tmpBool && writeToXML(ticketMap[e], "../data/tickets/ticket"+strconv.Itoa(ticketMap[e].Id))
 		delete(ticketMap, e)
 	}
 	return tmpBool
@@ -178,7 +184,7 @@ func checkCache() bool {
 			if tmpInt == randNumber {
 				tmpTicket := ticketMap[e]
 				delete(ticketMap, e)
-				return writeToXML(tmpTicket, "tickets/ticket"+strconv.Itoa(e))
+				return writeToXML(tmpTicket, "../data/tickets/ticket"+strconv.Itoa(e))
 			}
 			tmpInt++
 		}
