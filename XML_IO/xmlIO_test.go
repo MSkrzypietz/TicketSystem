@@ -193,10 +193,10 @@ func TestDeleting(t *testing.T) {
 	CreateTicket("client@dhbw.de", "Computer", "PC not working")
 	ClearCache()
 	assert.Equal(t, 0, len(ticketMap))
-	_, err := ioutil.ReadFile("tickets/ticket1.xml")
+	_, err := ioutil.ReadFile("../data/tickets/ticket1.xml")
 	assert.Nil(t, err)
 	DeleteTicket(1)
-	_, err = ioutil.ReadFile("tickets/ticket1.xml")
+	_, err = ioutil.ReadFile("../data/tickets/ticket1.xml")
 	assert.NotNil(t, err)
 
 	ClearCache()
@@ -248,7 +248,7 @@ func TestClearCache(t *testing.T) {
 	ClearCache()
 	assert.Equal(t, 0, len(ticketMap))
 
-	_, err1 := ioutil.ReadFile("tickets/ticket1.xml")
+	_, err1 := ioutil.ReadFile("../data/tickets/ticket1.xml")
 	assert.Nil(t, err1)
 
 	DeleteTicket(1)
