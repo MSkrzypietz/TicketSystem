@@ -11,7 +11,7 @@ import (
 )
 
 func RealUser(username string) bool {
-	users, err := ReadTxtFile("webserver//users.txt")
+	users, err := ReadTxtFile("webserver/users.txt")
 	if err != nil {
 		fmt.Println(err)
 	}

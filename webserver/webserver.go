@@ -23,7 +23,7 @@ func StartServer() {
 	http.HandleFunc("/login/", ServeLogin)
 	http.HandleFunc("/home/", ServeHome)
 	http.HandleFunc("/logout/", ServeLogout)
-	//err := http.ListenAndServe(":8080", nil)
+
 	err := http.ListenAndServeTLS(":"+config.DEFAULT_PORT, config.CERT_FILE, config.KEY_FILE, nil)
 	if err != nil {
 		panic(err)
