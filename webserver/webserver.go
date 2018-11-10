@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"TicketSystem/config"
+	"Ticketsystem/XML_IO"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -23,7 +24,7 @@ func StartServer() {
 	http.HandleFunc("/login/", ServeLogin)
 	http.HandleFunc("/home/", ServeHome)
 	http.HandleFunc("/logout/", ServeLogout)
-	//err := http.ListenAndServe(":8080", nil)
+
 	err := http.ListenAndServeTLS(":"+config.DEFAULT_PORT, config.CERT_FILE, config.KEY_FILE, nil)
 	if err != nil {
 		panic(err)
@@ -54,7 +55,7 @@ func ServeLogin(w http.ResponseWriter, r *http.Request) {
 		name := r.PostFormValue("name")
 		password := r.PostFormValue("password")
 
-		validUser := CheckUser(name, password)
+		validUser := XML_IO.CheckUser(name, password)
 
 		if validUser {
 			fmt.Fprintf(w, "Hello, you're successfully logged in!")

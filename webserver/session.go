@@ -11,7 +11,7 @@ import (
 )
 
 func RealUser(username string) bool {
-	users, err := ReadTxtFile("webserver//users.txt")
+	users, err := ReadTxtFile("webserver/users.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -24,22 +24,6 @@ func RealUser(username string) bool {
 		}
 	}
 	return realUser
-}
-
-func CheckUser(username string, password string) bool {
-	users, err := ReadTxtFile("webserver/users.txt")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	validUser := false
-	for _, user := range users {
-		row := strings.Split(string(user), ",")
-		if len(row) == 2 && row[0] == username && row[1] == password {
-			validUser = true
-		}
-	}
-	return validUser
 }
 
 func StartSession(w http.ResponseWriter, username string) {

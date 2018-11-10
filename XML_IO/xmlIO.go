@@ -20,14 +20,25 @@ type Ticket struct {
 	MessageList []Message `xml:"MessageList>Message"`
 }
 
-//strcut that defines a message with the parameters date of creation, name or mail of the actor and the text of the message
+//struct that defines a message with the parameters date of creation, name or mail of the actor and the text of the message
 type Message struct {
 	CreationDate time.Time `xml:"CreationDate"`
 	Actor        string    `xml:"Actor"`
-	Text         string    `xml:Text`
+	Text         string    `xml:"Text"`
 }
 
-var ticketMap map[int]Ticket = make(map[int]Ticket)
+var ticketMap = make(map[int]Ticket)
+
+//struct for one user
+type User struct {
+	Username  string `xml:"Username"`
+	Password  string `xml:"Password"`
+	SessionID string `xml:"SessionID"`
+}
+
+type Userlist struct {
+	User []User `xml:"users>user"`
+}
 
 //function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns a bool whether the creation was successful.
 func CreateTicket(client string, reference string, text string) bool {
@@ -59,7 +70,7 @@ func ReadTicket(id int) Ticket {
 	}
 
 	//returns ticket from the XML-file and stores it to the cache
-	file, err := ioutil.ReadFile("tickets/ticket" + strconv.Itoa(id) + ".xml")
+	file, err := ioutil.ReadFile("../data/tickets/ticket" + strconv.Itoa(id) + ".xml")
 	if err != nil {
 		return Ticket{}
 	}
@@ -76,7 +87,7 @@ func DeleteTicket(id int) bool {
 	if id == getTicketIDCounter() {
 		writeToXML(id-1, "definitions")
 	}
-	err := os.Remove("tickets/ticket" + strconv.Itoa(id) + ".xml")
+	err := os.Remove("../data/tickets/ticket" + strconv.Itoa(id) + ".xml")
 	if err != nil {
 		return false
 	}
@@ -163,7 +174,7 @@ func writeToXML(v interface{}, file string) bool {
 func ClearCache() bool {
 	tmpBool := true
 	for e := range ticketMap {
-		tmpBool = tmpBool && writeToXML(ticketMap[e], "tickets/ticket"+strconv.Itoa(ticketMap[e].Id))
+		tmpBool = tmpBool && writeToXML(ticketMap[e], "../data/tickets/ticket"+strconv.Itoa(ticketMap[e].Id))
 		delete(ticketMap, e)
 	}
 	return tmpBool
@@ -178,7 +189,7 @@ func checkCache() bool {
 			if tmpInt == randNumber {
 				tmpTicket := ticketMap[e]
 				delete(ticketMap, e)
-				return writeToXML(tmpTicket, "tickets/ticket"+strconv.Itoa(e))
+				return writeToXML(tmpTicket, "../data/tickets/ticket"+strconv.Itoa(e))
 			}
 			tmpInt++
 		}
@@ -186,4 +197,91 @@ func checkCache() bool {
 	} else {
 		return true
 	}
+}
+
+//creates a new user
+func createUser(name string, password string) bool {
+	usersMap := readUsers()
+	usersMap[name] = User{Username: name, Password: password, SessionID: ""}
+	return storeUsers(usersMap)
+}
+
+//reads all users from the xml-file
+func readUsers() map[string]User {
+	usersMap := make(map[string]User)
+
+	file, err := ioutil.ReadFile("../data/users.xml")
+	if err != nil {
+		panic(err)
+		return usersMap
+	}
+	var userlist Userlist
+	xml.Unmarshal(file, &userlist)
+
+	for e := range userlist.User {
+		usersMap[userlist.User[e].Username] = userlist.User[e]
+	}
+	return usersMap
+}
+
+//stores all users from the map to the xml file
+func storeUsers(usermap map[string]User) bool {
+	var users []User
+	for e := range usermap {
+		users = append(users, usermap[e])
+	}
+	return writeToXML(Userlist{User: users}, "../data/users")
+}
+
+//checks if the user is registrated
+func CheckUser(name string, password string) bool {
+	usersMap := readUsers()
+	if usersMap[name].Password == password {
+		return true
+	}
+	return false
+}
+
+//Login of a user to the ticket system
+func LoginUser(name string, password string, session string) bool {
+	usersMap := readUsers()
+	if usersMap[name].Password != password {
+		return false
+	}
+	tmpUser := usersMap[name]
+	tmpUser.SessionID = session
+	usersMap[name] = tmpUser
+	return storeUsers(usersMap)
+}
+
+//Logout of a user and deletes the session id
+func LogoutUser(name string) bool {
+	usersmap := readUsers()
+	if usersmap[name].Username == name {
+		tmpUser := usersmap[name]
+		tmpUser.SessionID = ""
+		usersmap[name] = tmpUser
+		return storeUsers(usersmap)
+	}
+	return false
+}
+
+//gets the actual session id of an user
+func GetUserSession(name string) string {
+	usersMap := readUsers()
+	return usersMap[name].SessionID
+}
+
+//returns an user by a specified session id
+func GetUserBySession(session string) User {
+	if session == "" {
+		return User{}
+	}
+	usersMap := readUsers()
+	for e := range usersMap {
+		if usersMap[e].SessionID == session {
+			return usersMap[e]
+		}
+	}
+	return User{}
 }

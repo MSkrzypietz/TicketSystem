@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Userlist>
+    <users>
+        <user>
+            <Username>mustermann</Username>
+            <Password>musterpasswort</Password>
+            <SessionID></SessionID>
+        </user>
+    </users>
+</Userlist>

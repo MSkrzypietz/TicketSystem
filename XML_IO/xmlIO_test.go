@@ -279,3 +279,61 @@ func TestCheckCache(t *testing.T) {
 	}
 	writeToXML(0, "definitions")
 }
+
+func TestCreateAndStoreUser(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	file, _ := ioutil.ReadFile("../data/users.xml")
+	var userlist Userlist
+	xml.Unmarshal(file, &userlist)
+
+	var expectedUser []User
+	expectedUser = append(expectedUser, User{Username: "mustermann", Password: "musterpasswort"})
+	expected := Userlist{User: expectedUser}
+	assert.Equal(t, expected, userlist)
+}
+
+func TestReadUser(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	expectedMap := make(map[string]User)
+	expectedMap["mustermann"] = User{Username: "mustermann", Password: "musterpasswort"}
+	assert.Equal(t, expectedMap, readUsers())
+}
+
+func TestCheckUser(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	assert.True(t, CheckUser("mustermann", "musterpasswort"))
+	assert.False(t, CheckUser("mustermann", "falschespasswort"))
+	assert.False(t, CheckUser("muster", "musterpasswort"))
+}
+
+func TestLoginUser(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	assert.True(t, LoginUser("mustermann", "musterpasswort", "1234"))
+	assert.False(t, LoginUser("mustermann", "falschespasswort", "1234"))
+	usersMap := readUsers()
+	assert.Equal(t, "1234", usersMap["mustermann"].SessionID)
+}
+
+func TestLogoutUser(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	assert.True(t, LoginUser("mustermann", "musterpasswort", "1234"))
+	usersmap := readUsers()
+	assert.Equal(t, "1234", usersmap["mustermann"].SessionID)
+	assert.True(t, LogoutUser("mustermann"))
+	usersmap = readUsers()
+	assert.Equal(t, "", usersmap["mustermann"].SessionID)
+}
+
+func TestGetUserSession(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	assert.Equal(t, "", GetUserSession("mustermann"))
+	LoginUser("mustermann", "musterpasswort", "1234")
+	assert.Equal(t, "1234", GetUserSession("mustermann"))
+}
+
+func TestGetUserBySession(t *testing.T) {
+	assert.True(t, createUser("mustermann", "musterpasswort"))
+	LoginUser("mustermann", "musterpasswort", "1234")
+	expectedUser := User{Username: "mustermann", Password: "musterpasswort", SessionID: "1234"}
+	assert.Equal(t, expectedUser, GetUserBySession("1234"))
+}
