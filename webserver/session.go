@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -75,25 +74,28 @@ func DestroySession(r *http.Request) {
 }
 
 func GetUserFromCookie(r *http.Request) string {
-	cookie, err := r.Cookie("session-id")
-	if err == nil {
-		sessionsFile, err := os.Open("webserver/session_id.txt")
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer sessionsFile.Close()
+	// TODO: Diese Funktion muss später einen User struct zurückgeben
 
-		scanner := bufio.NewScanner(sessionsFile)
-		for scanner.Scan() {
-			row := strings.Split(string(scanner.Text()), ",")
-			if len(row) == 2 && row[1] == cookie.Value {
-				return row[0]
-			}
-		}
-		return ""
-	} else {
-		return ""
-	}
+	//cookie, err := r.Cookie("session-id")
+	//if err == nil {
+	//	sessionsFile, err := os.Open("webserver/session_id.txt")
+	//	if err != nil {
+	//		fmt.Println(err)
+	//	}
+	//	defer sessionsFile.Close()
+	//
+	//	scanner := bufio.NewScanner(sessionsFile)
+	//	for scanner.Scan() {
+	//		row := strings.Split(string(scanner.Text()), ",")
+	//		if len(row) == 2 && row[1] == cookie.Value {
+	//			return row[0]
+	//		}
+	//	}
+	//	return ""
+	//} else {
+	//	return ""
+	//}
+	return ""
 }
 
 func CreateUUID(length int) string {

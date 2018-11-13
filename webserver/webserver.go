@@ -9,13 +9,13 @@ import (
 )
 
 func IndexPage(w http.ResponseWriter, r *http.Request) {
-	user := GetUserFromCookie(r)
-	if RealUser(user) {
-		// Show index Page
-	} else {
-		// Redirect to Login
-		http.Redirect(w, r, "/login/", http.StatusFound)
-	}
+	//user := GetUserFromCookie(r)
+	//if RealUser(user) {
+	//	// Show index Page
+	//} else {
+	// Redirect to Login
+	http.Redirect(w, r, "/login/", http.StatusFound)
+	//}
 }
 
 func StartServer() {
@@ -42,36 +42,36 @@ func ServeHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeLogin(w http.ResponseWriter, r *http.Request) {
-	user := GetUserFromCookie(r)
-	if !RealUser(user) {
-		t, _ := template.ParseFiles("templates/login.html")
-		fmt.Println(t.Execute(w, nil))
-
-		err := r.ParseForm()
-		if err != nil {
-			panic(err)
-		}
-		name := r.PostFormValue("name")
-		password := r.PostFormValue("password")
-
-		validUser := CheckUser(name, password)
-
-		if validUser {
-			fmt.Fprintf(w, "Hello, you're successfully logged in!")
-			StartSession(w, name)
-			http.Redirect(w, r, "/home/", http.StatusMovedPermanently)
-		} else {
-			fmt.Fprintf(w, "Something went wrong, please check your inputs")
-			http.Redirect(w, r, "/login/", http.StatusMovedPermanently)
-		}
-		//
-		//if err := scanner.Err(); err != nil {
-		//	panic(err)
-		//}
-	} else {
-		// User is already logged in
-		http.Redirect(w, r, "/home/", http.StatusFound)
-	}
+	//user := GetUserFromCookie(r)
+	//if !RealUser(user) {
+	t, _ := template.ParseFiles("templates/login.html")
+	fmt.Println(t.Execute(w, nil))
+	//
+	//	err := r.ParseForm()
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	name := r.PostFormValue("name")
+	//	password := r.PostFormValue("password")
+	//
+	//	validUser := CheckUser(name, password)
+	//
+	//	if validUser {
+	//		fmt.Fprintf(w, "Hello, you're successfully logged in!")
+	//		StartSession(w, name)
+	//		http.Redirect(w, r, "/home/", http.StatusMovedPermanently)
+	//	} else {
+	//		fmt.Fprintf(w, "Something went wrong, please check your inputs")
+	//		http.Redirect(w, r, "/login/", http.StatusMovedPermanently)
+	//	}
+	//	//
+	//	//if err := scanner.Err(); err != nil {
+	//	//	panic(err)
+	//	//}
+	//} else {
+	//	// User is already logged in
+	//	http.Redirect(w, r, "/home/", http.StatusFound)
+	//}
 }
 
 func ServeLogout(w http.ResponseWriter, r *http.Request) {
