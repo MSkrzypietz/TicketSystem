@@ -209,9 +209,8 @@ func createUser(name string, password string) bool {
 func readUsers() map[string]User {
 	usersMap := make(map[string]User)
 
-	file, err := ioutil.ReadFile("../data/users.xml")
+	file, err := ioutil.ReadFile("../data/users/users.xml")
 	if err != nil {
-		panic(err)
 		return usersMap
 	}
 	var userlist Userlist
@@ -229,7 +228,7 @@ func storeUsers(usermap map[string]User) bool {
 	for _, tmpUser := range usermap {
 		users = append(users, tmpUser)
 	}
-	return writeToXML(Userlist{User: users}, "../data/users")
+	return writeToXML(Userlist{User: users}, "../data/users/users")
 }
 
 //checks if the user is registrated

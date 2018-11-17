@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 )
@@ -102,6 +103,8 @@ func TestTicketReading(t *testing.T) {
 	msgList = append(msgList, Message{Actor: "client@dhbw.de", Text: "PC does not start anymore. Any idea?", CreationDate: actTicket.MessageList[0].CreationDate})
 	expectedTicket = Ticket{XMLName: xml.Name{"", "Ticket"}, Id: ticketID, Client: "client@dhbw.de", Reference: "PC problem", Editor: "0", Status: 0, MessageList: msgList}
 	assert.Equal(t, expectedTicket, actTicket)
+
+	assert.Equal(t, Ticket{}, ReadTicket(-99))
 
 	ClearCache()
 	DeleteTicket(ticketID)
@@ -282,7 +285,7 @@ func TestCheckCache(t *testing.T) {
 
 func TestCreateAndStoreUser(t *testing.T) {
 	assert.True(t, createUser("mustermann", "musterpasswort"))
-	file, _ := ioutil.ReadFile("../data/users.xml")
+	file, _ := ioutil.ReadFile("../data/users/users.xml")
 	var userlist Userlist
 	xml.Unmarshal(file, &userlist)
 
@@ -297,6 +300,10 @@ func TestReadUser(t *testing.T) {
 	expectedMap := make(map[string]User)
 	expectedMap["mustermann"] = User{Username: "mustermann", Password: "musterpasswort"}
 	assert.Equal(t, expectedMap, readUsers())
+	os.Remove("../data/users/users.xml")
+	expectedMap = make(map[string]User)
+	assert.Equal(t, expectedMap, readUsers())
+	os.Create("../data/users/users.xml")
 }
 
 func TestCheckUser(t *testing.T) {
@@ -322,6 +329,7 @@ func TestLogoutUser(t *testing.T) {
 	assert.True(t, LogoutUser("mustermann"))
 	usersmap = readUsers()
 	assert.Equal(t, "", usersmap["mustermann"].SessionID)
+	assert.False(t, LogoutUser("falscherName"))
 }
 
 func TestGetUserSession(t *testing.T) {
@@ -336,4 +344,6 @@ func TestGetUserBySession(t *testing.T) {
 	LoginUser("mustermann", "musterpasswort", "1234")
 	expectedUser := User{Username: "mustermann", Password: "musterpasswort", SessionID: "1234"}
 	assert.Equal(t, expectedUser, GetUserBySession("1234"))
+	assert.Equal(t, User{}, GetUserBySession(""))
+	assert.Equal(t, User{}, GetUserBySession("FalscheSession"))
 }
