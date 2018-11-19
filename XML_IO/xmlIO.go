@@ -199,7 +199,7 @@ func checkCache() bool {
 }
 
 //creates a new user
-func createUser(name string, password string) bool {
+func CreateUser(name string, password string) bool {
 	usersMap := readUsers()
 	usersMap[name] = User{Username: name, Password: password, SessionID: ""}
 	return storeUsers(usersMap)
