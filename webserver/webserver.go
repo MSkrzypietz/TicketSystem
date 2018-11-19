@@ -42,11 +42,14 @@ func ServeRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: Refactored into own func
 	if r.PostFormValue("newPassword1") != r.PostFormValue("newPassword2") {
 		log.Println("Aborting registration... The entered passwords don't match.")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	// TODO: More validation check like username == pw? or len(username) > 4? ...
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.PostFormValue("newPassword1")), bcrypt.MinCost)
 	if err != nil {
@@ -54,7 +57,7 @@ func ServeRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Handle error from CreateUser
-	XML_IO.CreateUser(r.PostFormValue("newUsername"), string(hashedPassword))
+	XML_IO.CreateUser("../data/users/users.xml", r.PostFormValue("newUsername"), string(hashedPassword))
 }
 
 func ServeHome(w http.ResponseWriter, r *http.Request) {
