@@ -1,9 +1,12 @@
 package webserver
 
 import (
+	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"html/template"
+	"log"
 	"net/http"
 	//"github.com/stretchr/testify/assert"
 )
@@ -20,6 +23,7 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 
 func StartServer() {
 	http.HandleFunc("/", IndexPage)
+	http.HandleFunc("/register/", ServeRegister)
 	http.HandleFunc("/login/", ServeLogin)
 	http.HandleFunc("/home/", ServeHome)
 	http.HandleFunc("/logout/", ServeLogout)
@@ -28,6 +32,29 @@ func StartServer() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func ServeRegister(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if r.PostFormValue("newPassword1") != r.PostFormValue("newPassword2") {
+		log.Println("Aborting registration... The entered passwords don't match.")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.PostFormValue("newPassword1")), bcrypt.MinCost)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// TODO: Handle error from CreateUser
+	XML_IO.CreateUser(r.PostFormValue("newUsername"), string(hashedPassword))
 }
 
 func ServeHome(w http.ResponseWriter, r *http.Request) {
