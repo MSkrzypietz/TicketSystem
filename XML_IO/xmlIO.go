@@ -200,6 +200,7 @@ func checkCache() bool {
 
 //creates a new user
 func CreateUser(name string, password string) bool {
+	//TODO: Check if the username already exists -> return error instead of bool?
 	usersMap := readUsers()
 	usersMap[name] = User{Username: name, Password: password, SessionID: ""}
 	return storeUsers(usersMap)
