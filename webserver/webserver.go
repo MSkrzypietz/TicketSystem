@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	//"github.com/stretchr/testify/assert"
 )
 
@@ -77,8 +78,8 @@ func ServeHome(w http.ResponseWriter, r *http.Request) {
 func ServeLogin(w http.ResponseWriter, r *http.Request) {
 	//user := GetUserFromCookie(r)
 	//if !RealUser(user) {
-	t, _ := template.ParseFiles("templates/login.html")
-	fmt.Println(t.Execute(w, nil))
+	t, _ := template.ParseFiles(config.TemplatePath + string(os.PathSeparator) + "login.html")
+	t.Execute(w, nil)
 	//
 	//	err := r.ParseForm()
 	//	if err != nil {
