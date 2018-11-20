@@ -234,6 +234,8 @@ func storeUsers(path string, usermap map[string]User) bool {
 	return writeToXML(Userlist{User: users}, path)
 }
 
+// TODO: Wieso wird das Passwort benötigt? Wenn die Funktion nur überprüft, ob ein User vorhanden ist, wird nur der Name benötigt.
+// TODO: Gerade bei der Registrierung will ich abfragen, ob ein Name bereits vergeben ist und kann kein Passwort angeben
 //checks if the user is registrated
 func CheckUser(path string, name string, password string) bool {
 	usersMap := readUsers(path)
