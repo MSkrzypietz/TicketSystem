@@ -133,6 +133,7 @@ func GetTicketsByEditor(path string, definitionsPath string, editor string) []Ti
 	return tickets
 }
 
+// TODO: We should find another way to get the ticket id counter to remove the need to specify the definitions path
 //returns the actual ticket ID in order to create a new ticket or to get to know the number of the stored tickets.
 func getTicketIDCounter(definitionsPath string) int {
 	file, err := ioutil.ReadFile(definitionsPath)
