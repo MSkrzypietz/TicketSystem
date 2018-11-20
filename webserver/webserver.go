@@ -23,7 +23,7 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 
 func StartServer() {
 	http.HandleFunc("/", IndexPage)
-	http.HandleFunc("/register", ServeRegister)
+	http.HandleFunc("/register", ServeUserRegistration)
 	http.HandleFunc("/login", ServeLogin)
 	http.HandleFunc("/home", ServeHome)
 	http.HandleFunc("/logout", ServeLogout)
@@ -34,7 +34,7 @@ func StartServer() {
 	}
 }
 
-func ServeRegister(w http.ResponseWriter, r *http.Request) {
+func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
@@ -57,7 +57,8 @@ func ServeRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Handle error from CreateUser
-	XML_IO.CreateUser("data/users/users.xml", r.PostFormValue("newUsername"), string(hashedPassword))
+	XML_IO.CreateUser(config.UsersPath, r.PostFormValue("newUsername"), string(hashedPassword))
+	w.WriteHeader(http.StatusAccepted) // if no error
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
