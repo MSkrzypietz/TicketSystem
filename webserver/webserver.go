@@ -17,16 +17,16 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 	//	// Show index Page
 	//} else {
 	// Redirect to Login
-	http.Redirect(w, r, "/login/", http.StatusFound)
+	http.Redirect(w, r, "/login", http.StatusFound)
 	//}
 }
 
 func StartServer() {
 	http.HandleFunc("/", IndexPage)
-	http.HandleFunc("/register/", ServeRegister)
-	http.HandleFunc("/login/", ServeLogin)
-	http.HandleFunc("/home/", ServeHome)
-	http.HandleFunc("/logout/", ServeLogout)
+	http.HandleFunc("/register", ServeRegister)
+	http.HandleFunc("/login", ServeLogin)
+	http.HandleFunc("/home", ServeHome)
+	http.HandleFunc("/logout", ServeLogout)
 
 	err := http.ListenAndServeTLS(":"+config.DEFAULT_PORT, config.CERT_FILE, config.KEY_FILE, nil)
 	if err != nil {
@@ -42,11 +42,14 @@ func ServeRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: Refactored into own func
 	if r.PostFormValue("newPassword1") != r.PostFormValue("newPassword2") {
 		log.Println("Aborting registration... The entered passwords don't match.")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	// TODO: More validation check like username == pw? or len(username) > 4? ...
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.PostFormValue("newPassword1")), bcrypt.MinCost)
 	if err != nil {
@@ -54,7 +57,9 @@ func ServeRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Handle error from CreateUser
-	XML_IO.CreateUser(r.PostFormValue("newUsername"), string(hashedPassword))
+	XML_IO.CreateUser("data/users/users.xml", r.PostFormValue("newUsername"), string(hashedPassword))
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func ServeHome(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +69,7 @@ func ServeHome(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		// Redirect to login
-		http.Redirect(w, r, "/login/", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 	}
 }
 
