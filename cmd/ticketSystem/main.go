@@ -20,8 +20,8 @@ func main() {
 
 func handleFlags() {
 	usersFilePath := flag.String("users", "data/users/users.xml", "Path to users.xml file")
-	serverCertPath := flag.String("cert", "https/server.crt", "Path to server certificate")
-	serverKeyPath := flag.String("key", "https/server.key", "Path to server key")
+	serverCertPath := flag.String("cert", "etc/server.crt", "Path to server certificate")
+	serverKeyPath := flag.String("key", "etc/server.key", "Path to server key")
 	templatePath := flag.String("templates", "templates", "Path to templates folder")
 	port := flag.Int("port", 443, "Port on which the server should run")
 	flag.Parse()
