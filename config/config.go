@@ -5,5 +5,5 @@ var (
 	ServerCertPath = "etc/server.crt"
 	ServerKeyPath  = "etc/server.key"
 	TemplatePath   = "templates"
-	Port           = "443"
+	Port           = 443
 )

@@ -8,7 +8,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
+	"path"
+	"strconv"
 	//"github.com/stretchr/testify/assert"
 )
 
@@ -29,10 +30,12 @@ func StartServer() {
 	http.HandleFunc("/home", ServeHome)
 	http.HandleFunc("/logout", ServeLogout)
 
-	err := http.ListenAndServeTLS(":"+config.Port, config.ServerCertPath, config.ServerKeyPath, nil)
+	log.Printf("The server is starting to listen on port %d", config.Port)
+	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
 	if err != nil {
 		panic(err)
 	}
+	log.Println("The server has shutdown.")
 }
 
 func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
@@ -78,8 +81,8 @@ func ServeHome(w http.ResponseWriter, r *http.Request) {
 func ServeLogin(w http.ResponseWriter, r *http.Request) {
 	//user := GetUserFromCookie(r)
 	//if !RealUser(user) {
-	t, _ := template.ParseFiles(config.TemplatePath + string(os.PathSeparator) + "login.html")
-	t.Execute(w, nil)
+	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "login.html"))
+	fmt.Println(t.Execute(w, nil))
 	//
 	//	err := r.ParseForm()
 	//	if err != nil {
