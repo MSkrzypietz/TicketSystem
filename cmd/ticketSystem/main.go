@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -31,12 +32,10 @@ func handleFlags() {
 		log.Println(err)
 		config.Port = 443
 
-		/*
-			if err := checkPortAvailability(config.Port); err != nil {
-				log.Println("the default port 443 is also in use and hence the program will terminate")
-				os.Exit(0)
-			}
-		*/
+		if ok, err := checkPortAvailability(config.Port); !ok {
+			log.Printf("the default port 443 is also in use and hence the program will terminate: %v", err)
+			os.Exit(0)
+		}
 	}
 
 	var err error
@@ -66,11 +65,9 @@ func validatePort(port int) (bool, error) {
 		return false, fmt.Errorf("the specified port %d is not in the port range of 0 to 65535. Using the default port 443 instead", port)
 	}
 
-	/* TODO: not working properly -> see test
-	if err := checkPortAvailability(port); err != nil {
+	if ok, err := checkPortAvailability(port); !ok {
 		return false, fmt.Errorf("the specified port %q is already in use: %s", port, err)
 	}
-	*/
 
 	return true, nil
 }
@@ -79,13 +76,13 @@ func checkPortBoundaries(port int) bool {
 	return port >= 0 && port <= math.MaxUint16
 }
 
-func checkPortAvailability(port int) error {
-	l, err := net.Listen("tcp", ":"+string(port))
+func checkPortAvailability(port int) (bool, error) {
+	l, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer l.Close()
-	return nil
+	return true, nil
 }
 
 func validatePath(path string, def string) (string, error) {

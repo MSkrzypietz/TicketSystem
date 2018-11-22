@@ -13,18 +13,8 @@ import (
 	//"github.com/stretchr/testify/assert"
 )
 
-func IndexPage(w http.ResponseWriter, r *http.Request) {
-	//user := GetUserFromCookie(r)
-	//if RealUser(user) {
-	//	// Show index Page
-	//} else {
-	// Redirect to Login
-	http.Redirect(w, r, "/login", http.StatusFound)
-	//}
-}
-
 func StartServer() {
-	http.HandleFunc("/", IndexPage)
+	http.Handle("/", http.FileServer(http.Dir(config.TemplatePath)))
 	http.HandleFunc("/register", ServeUserRegistration)
 	http.HandleFunc("/login", ServeLogin)
 	http.HandleFunc("/home", ServeHome)

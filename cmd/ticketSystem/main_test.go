@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"net"
+	"strconv"
 	"testing"
 )
 
@@ -15,27 +17,27 @@ func TestCheckPortBoundaries(t *testing.T) {
 }
 
 func TestCheckPortAvailability(t *testing.T) {
-	/* TODO: First assert is not working because the listener is not closing in time -> how to wait until its stopped??? */
 	// Using port 0 returns a free / available port selected by the system
-	/*
-		listener, err := net.Listen("tcp", ":0")
-		if err != nil {
-			panic(err)
-		}
-		availablePort := listener.Addr().(*net.TCPAddr).Port
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		panic(err)
+	}
+	availablePort := listener.Addr().(*net.TCPAddr).Port
+	listener.Close()
 
-		gracefulListener := helpers.NewGracefulListener(listener, 2 * time.Second)
-		gracefulListener.Close()
+	actual, err := checkPortAvailability(availablePort)
+	assert.True(t, actual)
+	assert.Nil(t, err)
 
-		assert.Nil(t, checkPortAvailability(availablePort))
+	listener, err = net.Listen("tcp", ":"+strconv.Itoa(availablePort))
+	if err != nil {
+		panic(err)
+	}
+	defer listener.Close()
 
-		listener, err = net.Listen("tcp", ":" + string(availablePort))
-		if err != nil {
-			panic(err)
-		}
-
-		assert.Equal(t, false, checkPortAvailability(availablePort))
-		listener.Close() */
+	actual, err = checkPortAvailability(availablePort)
+	assert.False(t, actual)
+	assert.NotNil(t, err)
 }
 
 func TestIsPathSpecified(t *testing.T) {
