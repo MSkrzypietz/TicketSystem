@@ -5,5 +5,5 @@ var (
 	ServerCertPath = "https/server.crt"
 	ServerKeyPath  = "https/server.key"
 	TemplatePath   = "templates"
-	Port           = "443"
+	Port           = 443
 )
