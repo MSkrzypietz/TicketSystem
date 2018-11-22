@@ -2,6 +2,7 @@ package XML_IO
 
 import (
 	"encoding/xml"
+	"errors"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -40,71 +41,80 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
-// TODO: This func should return a struct of the ticket and an error
-//function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns a bool whether the creation was successful.
-func CreateTicket(path string, definitionsPath string, client string, reference string, text string) bool {
+//function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns the ticket struct and an error whether the creation was successful.
+func CreateTicket(path string, definitionsPath string, client string, reference string, text string) (Ticket, error) {
 	IDCounter := getTicketIDCounter(definitionsPath) + 1
 	newTicket := Ticket{Id: IDCounter, Client: client, Reference: reference, Status: 0, Editor: "0"}
-	return AddMessage(path, newTicket, client, text) && writeToXML(IDCounter, definitionsPath)
+	err := writeToXML(IDCounter, definitionsPath)
+	if err != nil {
+		return Ticket{}, err
+	}
+	return AddMessage(path, newTicket, client, text)
 }
 
-//adds a message to a specified tickets. Functions includes the following parameters: specified ticket, the actor and the text of the message. Returns a bool whether it was successful.
-func AddMessage(path string, ticket Ticket, actor string, text string) bool {
+//adds a message to a specified tickets. Functions includes the following parameters: specified ticket, the actor and the text of the message. Returns the new ticket and an error whether it was successful.
+func AddMessage(path string, ticket Ticket, actor string, text string) (Ticket, error) {
 	newMessage := Message{CreationDate: time.Now(), Actor: actor, Text: text}
 	ticket.MessageList = append(ticket.MessageList, newMessage)
-	return StoreTicket(path, ticket)
+	return ticket, StoreTicket(path, ticket)
 }
 
-//stores a ticket to the cache (if there are too many tickets in the cache one will be written to the XML-file)
-func StoreTicket(path string, ticket Ticket) bool {
-	tmpBool := checkCache(path)
+//stores a ticket to the cache (if there are too many tickets in the cache one will be written to the XML-file). Returns an error whether it was successful.
+func StoreTicket(path string, ticket Ticket) error {
+	err := checkCache(path)
 	ticketMap[ticket.Id] = ticket
-	return tmpBool
+	return err
 }
 
-//reads a specified ticket from the XML-file or from the cache. Function has as the parameter the ticket ID and returns the ticket
-func ReadTicket(path string, id int) Ticket {
+//reads a specified ticket from the XML-file or from the cache. Function has as the parameter the ticket ID and returns the ticket and an error whether the reading process from the xml file was successful.
+func ReadTicket(path string, id int) (Ticket, error) {
 	//returns the ticket from the cache if it is stored in there
 	tempTicket := ticketMap[id]
 	if tempTicket.Id != 0 {
-		return tempTicket
+		return tempTicket, nil
 	}
 
 	//returns ticket from the XML-file and stores it to the cache
 	file, err := ioutil.ReadFile(path + strconv.Itoa(id) + ".xml")
 	if err != nil {
-		return Ticket{}
+		return Ticket{}, err
 	}
 	var ticket Ticket
 	xml.Unmarshal(file, &ticket)
 	checkCache(path)
 	ticketMap[ticket.Id] = ticket
-	return ticket
+	return ticket, nil
 }
 
-//deletes a ticket by its ID
-func DeleteTicket(path string, definitionsPath string, id int) bool {
+//deletes a ticket by its ID and returns an error whether it was successful.
+func DeleteTicket(path string, definitionsPath string, id int) error {
 	delete(ticketMap, id)
 	if id == getTicketIDCounter(definitionsPath) {
 		writeToXML(id-1, definitionsPath)
 	}
 	err := os.Remove(path + strconv.Itoa(id) + ".xml")
 	if err != nil {
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
-//changes the editor of a ticket
-func ChangeEditor(path string, id int, editor string) bool {
-	ticket := ReadTicket(path, id)
+//changes the editor of a ticket and returns an error whether the change was successful.
+func ChangeEditor(path string, id int, editor string) error {
+	ticket, err := ReadTicket(path, id)
+	if err != nil {
+		return err
+	}
 	ticket.Editor = editor
 	return StoreTicket(path, ticket)
 }
 
-//changes the status of a ticket
-func ChangeStatus(path string, id int, status int) bool {
-	ticket := ReadTicket(path, id)
+//changes the status of a ticket and returns an error whether the change was successful.
+func ChangeStatus(path string, id int, status int) error {
+	ticket, err := ReadTicket(path, id)
+	if err != nil {
+		return err
+	}
 	ticket.Status = status
 	return StoreTicket(path, ticket)
 }
@@ -113,7 +123,7 @@ func ChangeStatus(path string, id int, status int) bool {
 func GetTicketsByStatus(path string, definitionsPath string, status int) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(definitionsPath); actualID++ {
-		tmp := ReadTicket(path, actualID)
+		tmp, _ := ReadTicket(path, actualID)
 		if tmp.Status == status && tmp.Id != 0 {
 			tickets = append(tickets, tmp)
 		}
@@ -125,7 +135,7 @@ func GetTicketsByStatus(path string, definitionsPath string, status int) []Ticke
 func GetTicketsByEditor(path string, definitionsPath string, editor string) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(definitionsPath); actualID++ {
-		tmp := ReadTicket(path, actualID)
+		tmp, _ := ReadTicket(path, actualID)
 		if tmp.Editor == editor && tmp.Id != 0 {
 			tickets = append(tickets, tmp)
 		}
@@ -138,19 +148,25 @@ func GetTicketsByEditor(path string, definitionsPath string, editor string) []Ti
 func getTicketIDCounter(definitionsPath string) int {
 	file, err := ioutil.ReadFile(definitionsPath)
 	if err != nil {
-		panic(err)
+		return -1
 	}
 	var IDCounter int
 	xml.Unmarshal(file, &IDCounter)
 	return IDCounter
 }
 
-//merge two tickets, store them as one ticket and delete the other one
-func MergeTickets(path string, definitionsPath string, firstTicketID int, secondTicketID int) bool {
-	firstTicket := ReadTicket(path, firstTicketID)
-	secondTicket := ReadTicket(path, secondTicketID)
+//merge two tickets, store them as one ticket and delete the other one. Returns an error whether the merge was successful.
+func MergeTickets(path string, definitionsPath string, firstTicketID int, secondTicketID int) error {
+	firstTicket, err1 := ReadTicket(path, firstTicketID)
+	secondTicket, err2 := ReadTicket(path, secondTicketID)
+	if err1 != nil {
+		return err1
+	}
+	if err2 != nil {
+		return err2
+	}
 	if firstTicket.Editor != secondTicket.Editor {
-		return false
+		return errors.New("The two tickets for the merging process do not have the same editors.")
 	}
 	for _, msgList := range secondTicket.MessageList {
 		firstTicket.MessageList = append(firstTicket.MessageList, msgList)
@@ -159,31 +175,35 @@ func MergeTickets(path string, definitionsPath string, firstTicketID int, second
 	return StoreTicket(path, firstTicket)
 }
 
-//functions writes an object to an specified xml file and returns a bool whether the writing was successful
-func writeToXML(v interface{}, path string) bool {
-	if xmlstring, err := xml.MarshalIndent(v, "", "    "); err == nil {
-		xmlstring = []byte(xml.Header + string(xmlstring))
-		err = ioutil.WriteFile(path, xmlstring, 0644)
-		if err != nil {
-			panic(err)
-		}
-		return true
+//functions writes an object to an specified xml file and returns an error whether the writing was successful.
+func writeToXML(v interface{}, path string) error {
+	xmlstring, err := xml.MarshalIndent(v, "", "    ")
+	if err != nil {
+		return err
 	}
-	return false
+	xmlstring = []byte(xml.Header + string(xmlstring))
+	err = ioutil.WriteFile(path, xmlstring, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-//function clears the cache
-func ClearCache(path string) bool {
-	tmpBool := true
+//function clears the cache and returns an error whether it was successful.
+func ClearCache(path string) error {
+	var err error
 	for _, ticket := range ticketMap {
-		tmpBool = tmpBool && writeToXML(ticket, path+strconv.Itoa(ticket.Id)+".xml")
+		newErr := writeToXML(ticket, path+strconv.Itoa(ticket.Id)+".xml")
+		if newErr != nil {
+			err = newErr
+		}
 		delete(ticketMap, ticket.Id)
 	}
-	return tmpBool
+	return err
 }
 
-//function checks if there are too many tickets in the cache and in the case of too many tickets one will be written to the XML-file.
-func checkCache(path string) bool {
+//function checks if there are too many tickets in the cache and in the case of too many tickets one will be written to the XML-file. Returns an error whether it was successful.
+func checkCache(path string) error {
 	if len(ticketMap) > 10 {
 		randNumber := rand.Intn(len(ticketMap))
 		tmpInt := 1
@@ -194,39 +214,43 @@ func checkCache(path string) bool {
 			}
 			tmpInt++
 		}
-		return false
+		return errors.New("No ticket found in the cache.")
 	} else {
-		return true
+		return nil
 	}
 }
 
-//creates a new user
-func CreateUser(path string, name string, password string) bool {
-	//TODO: Check if the username already exists -> return error instead of bool?
-	usersMap := readUsers(path)
+//creates a new user and returns the user and an error whether the creation was successful.
+func CreateUser(path string, name string, password string) (User, error) {
+	usersMap, err := readUsers(path)
+	if err != nil {
+		return User{}, err
+	}
 	usersMap[name] = User{Username: name, Password: password, SessionID: ""}
-	return storeUsers(path, usersMap)
+	err = storeUsers(path, usersMap)
+	if err != nil {
+		return User{}, err
+	}
+	return usersMap[name], nil
 }
 
-//reads all users from the xml-file
-func readUsers(path string) map[string]User {
+//reads all users from the xml-file and returns the users and an error whether the reading process was successful.
+func readUsers(path string) (map[string]User, error) {
 	usersMap := make(map[string]User)
-
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return usersMap
+		return usersMap, err
 	}
 	var userlist Userlist
 	xml.Unmarshal(file, &userlist)
-
 	for _, tmpUser := range userlist.User {
 		usersMap[tmpUser.Username] = tmpUser
 	}
-	return usersMap
+	return usersMap, nil
 }
 
-//stores all users from the map to the xml file
-func storeUsers(path string, usermap map[string]User) bool {
+//stores all users from the map to the xml file and returns an error whether the storing process was successful.
+func storeUsers(path string, usermap map[string]User) error {
 	var users []User
 	for _, tmpUser := range usermap {
 		users = append(users, tmpUser)
@@ -234,22 +258,38 @@ func storeUsers(path string, usermap map[string]User) bool {
 	return writeToXML(Userlist{User: users}, path)
 }
 
-// TODO: Wieso wird das Passwort benötigt? Wenn die Funktion nur überprüft, ob ein User vorhanden ist, wird nur der Name benötigt.
-// TODO: Gerade bei der Registrierung will ich abfragen, ob ein Name bereits vergeben ist und kann kein Passwort angeben
-//checks if the user is registrated
-func CheckUser(path string, name string, password string) bool {
-	usersMap := readUsers(path)
-	if usersMap[name].Password == password {
-		return true
+//checks if the user is registrated and returns a bool. The bool value is false if there is already a user with that name.
+func CheckUser(path string, name string) (bool, error) {
+	usersMap, err := readUsers(path)
+	if err != nil {
+		return false, err
 	}
-	return false
+	if usersMap[name].Username == name {
+		return false, nil
+	}
+	return true, nil
 }
 
-//Login of a user to the ticket system
-func LoginUser(path string, name string, password string, session string) bool {
-	usersMap := readUsers(path)
+//checks if the username and the password is correct. Returns a bool whether it is correct.
+func VerifyUser(path string, name string, password string) (bool, error) {
+	usersMap, err := readUsers(path)
+	if err != nil {
+		return false, err
+	}
+	if usersMap[name].Password == password {
+		return true, nil
+	}
+	return false, nil
+}
+
+//Login of a user to the ticket system. Returns an error if an error occurs.
+func LoginUser(path string, name string, password string, session string) error {
+	usersMap, err := readUsers(path)
+	if err != nil {
+		return nil
+	}
 	if usersMap[name].Password != password {
-		return false
+		return errors.New("Username or password is not correct.")
 	}
 	tmpUser := usersMap[name]
 	tmpUser.SessionID = session
@@ -257,21 +297,24 @@ func LoginUser(path string, name string, password string, session string) bool {
 	return storeUsers(path, usersMap)
 }
 
-//Logout of a user and deletes the session id
-func LogoutUser(path string, name string) bool {
-	usersmap := readUsers(path)
-	if usersmap[name].Username == name {
-		tmpUser := usersmap[name]
-		tmpUser.SessionID = ""
-		usersmap[name] = tmpUser
-		return storeUsers(path, usersmap)
+//Logout of a user and deletes the session id. Returns an error if an error occurs.
+func LogoutUser(path string, name string) error {
+	usersmap, err := readUsers(path)
+	if err != nil {
+		return err
 	}
-	return false
+	if usersmap[name].Username != name {
+		return errors.New("User does not exist.")
+	}
+	tmpUser := usersmap[name]
+	tmpUser.SessionID = ""
+	usersmap[name] = tmpUser
+	return storeUsers(path, usersmap)
 }
 
 //gets the actual session id of an user
 func GetUserSession(path string, name string) string {
-	usersMap := readUsers(path)
+	usersMap, _ := readUsers(path)
 	return usersMap[name].SessionID
 }
 
@@ -280,7 +323,7 @@ func GetUserBySession(path string, session string) User {
 	if session == "" {
 		return User{}
 	}
-	usersMap := readUsers(path)
+	usersMap, _ := readUsers(path)
 	for _, tmpUser := range usersMap {
 		if tmpUser.SessionID == session {
 			return tmpUser
