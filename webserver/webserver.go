@@ -14,9 +14,10 @@ import (
 )
 
 func StartServer() {
-	http.Handle("/", http.FileServer(http.Dir(config.TemplatePath)))
+	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/register", ServeUserRegistration)
 	http.HandleFunc("/login", ServeLogin)
+	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/home", ServeHome)
 	http.HandleFunc("/logout", ServeLogout)
 
@@ -26,6 +27,44 @@ func StartServer() {
 		panic(err)
 	}
 	log.Println("The server has shutdown.")
+}
+
+func ServeIndex(w http.ResponseWriter, r *http.Request) {
+	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "index.html"))
+	t.Execute(w, nil)
+}
+
+func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if r.PostFormValue("email") == "" {
+		t, _ := template.ParseFiles(path.Join(config.TemplatePath, "newticket.html"))
+		t.Execute(w, nil)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	// TODO: Add validation checks: empty strings, too long?, email regex check
+
+	// TODO: Handle errors from CreateTicket
+	ok := XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
+
+	// TODO: This ClearCache call should not be required -> CreateTicket should already persist it
+	if ok {
+		XML_IO.ClearCache("data/tickets/ticket")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
 }
 
 func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
