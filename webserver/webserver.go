@@ -56,10 +56,10 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	// TODO: Add validation checks: empty strings, too long?, email regex check
 
 	// TODO: Handle errors from CreateTicket
-	ok := XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
+	_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
 
 	// TODO: This ClearCache call should not be required -> CreateTicket should already persist it
-	if ok {
+	if err == nil {
 		XML_IO.ClearCache("data/tickets/ticket")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else {
