@@ -2,16 +2,29 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <title>New Ticket</title>
 </head>
-<body>
-    <h1>New Ticket</h1>
-
-    <form action="/createTicket" method="post">
-        <input type="text" name="email" placeholder="Enter your email" />
-        <input type="text" name="subject" placeholder="Enter your topic" />
-        <input type="text" name="message" placeholder="Enter your message" />
-        <button type="submit">Submit</button>
-    </form>
+<body class="bg-light">
+    <div class="container">
+        <h1 class="display-3">Create a new Ticket</h1>
+        <hr>
+        <form action="/createTicket" method="post">
+            <div class="form-group">
+                <label for="emailFormControl">Email address</label>
+                <input type="email" class="form-control" name="email" id="emailFormControl" placeholder="Enter your email" />
+            </div>
+            <div class="form-group">
+                <label for="subjectFormControl">Subject</label>
+                <input type="text" class="form-control" name="subject" id="subjectFormControl" placeholder="Enter your topic" />
+            </div>
+            <div class="form-group">
+                <label for="textAreaFormControl">Message</label>
+                <textarea name="message" class="form-control" id="textAreaFormControl" rows="3" placeholder="Enter your message"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Submit</button>
+        </form>
+    </div>
 </body>
 </html>
