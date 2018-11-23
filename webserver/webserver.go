@@ -97,14 +97,9 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeHome(w http.ResponseWriter, r *http.Request) {
-	user := GetUserFromCookie(r)
-	if RealUser(user) {
-		// Show home
+	//user := GetUserFromCookie(r)
 
-	} else {
-		// Redirect to login
-		http.Redirect(w, r, "/login", http.StatusFound)
-	}
+	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
 func ServeLogin(w http.ResponseWriter, r *http.Request) {

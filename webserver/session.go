@@ -2,44 +2,10 @@ package webserver
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 )
-
-func RealUser(username string) bool {
-	users, err := ReadTxtFile("webserver/users.txt")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	realUser := false
-	for _, user := range users {
-		row := strings.Split(string(user), ",")
-		if len(row) == 2 && row[0] == username {
-			realUser = true
-		}
-	}
-	return realUser
-}
-
-func CheckUser(username string, password string) bool {
-	users, err := ReadTxtFile("webserver/users.txt")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	validUser := false
-	for _, user := range users {
-		row := strings.Split(string(user), ",")
-		if len(row) == 2 && row[0] == username && row[1] == password {
-			validUser = true
-		}
-	}
-	return validUser
-}
 
 func StartSession(w http.ResponseWriter, username string) {
 	f, err := os.OpenFile("webserver/session_id.txt", os.O_APPEND|os.O_WRONLY, 0600)
@@ -106,13 +72,4 @@ func CreateUUID(length int) string {
 		byteSlice[i] = letters[rand.Int63()%int64(len(letters))]
 	}
 	return string(byteSlice)
-}
-
-func ReadTxtFile(path string) ([]string, error) {
-	userFile, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	stringSlice := strings.Fields(string(userFile))
-	return stringSlice, err
 }
