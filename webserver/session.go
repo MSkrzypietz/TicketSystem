@@ -1,6 +1,8 @@
 package webserver
 
 import (
+	"TicketSystem/XML_IO"
+	"TicketSystem/config"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -39,29 +41,16 @@ func DestroySession(r *http.Request) {
 	cookie.MaxAge = -1
 }
 
-func GetUserFromCookie(r *http.Request) string {
+func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {
 	// TODO: Diese Funktion muss später einen User struct zurückgeben
 
-	//cookie, err := r.Cookie("session-id")
-	//if err == nil {
-	//	sessionsFile, err := os.Open("webserver/session_id.txt")
-	//	if err != nil {
-	//		fmt.Println(err)
-	//	}
-	//	defer sessionsFile.Close()
-	//
-	//	scanner := bufio.NewScanner(sessionsFile)
-	//	for scanner.Scan() {
-	//		row := strings.Split(string(scanner.Text()), ",")
-	//		if len(row) == 2 && row[1] == cookie.Value {
-	//			return row[0]
-	//		}
-	//	}
-	//	return ""
-	//} else {
-	//	return ""
-	//}
-	return ""
+	sessionID := ""
+	cookie, err := r.Cookie("session-id")
+	if err == nil {
+		sessionID = cookie.Value
+	}
+
+	return XML_IO.GetUserBySession(config.UsersPath, sessionID), err
 }
 
 func CreateUUID(length int) string {
