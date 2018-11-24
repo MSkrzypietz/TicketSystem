@@ -58,9 +58,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	// TODO: Handle errors from CreateTicket
 	_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
 
-	// TODO: This ClearCache call should not be required -> CreateTicket should already persist it
 	if err == nil {
-		XML_IO.ClearCache("data/tickets/ticket")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
