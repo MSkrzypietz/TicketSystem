@@ -41,6 +41,20 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
+//TODO: add this function to the main function at the beginning
+//creates directory for the data storage if it doesn´t exist
+func InitDataStorage() {
+	_, err := os.Stat("../data/tickets")
+	if err != nil && os.IsNotExist(err) {
+		os.MkdirAll("../data/tickets", 0777)
+	}
+	_, err = os.Stat("../data/users/users.xml")
+	if err != nil && os.IsNotExist(err) {
+		os.MkdirAll("../data/users", 0777)
+		writeToXML(nil, "../data/users/users.xml")
+	}
+}
+
 //function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns the ticket struct and an error whether the creation was successful.
 func CreateTicket(path string, definitionsPath string, client string, reference string, text string) (Ticket, error) {
 	IDCounter := getTicketIDCounter(definitionsPath) + 1
@@ -59,29 +73,25 @@ func AddMessage(path string, ticket Ticket, actor string, text string) (Ticket, 
 	return ticket, StoreTicket(path, ticket)
 }
 
-//stores a ticket to the cache (if there are too many tickets in the cache one will be written to the XML-file). Returns an error whether it was successful.
+//stores a ticket as xml file
 func StoreTicket(path string, ticket Ticket) error {
-	err := checkCache(path)
-	ticketMap[ticket.Id] = ticket
-	return err
+	delete(ticketMap, ticket.Id)
+	return writeToXML(ticket, path+strconv.Itoa(ticket.Id)+".xml")
 }
 
-//reads a specified ticket from the XML-file or from the cache. Function has as the parameter the ticket ID and returns the ticket and an error whether the reading process from the xml file was successful.
+//returns a ticket from the cache or from the corresponding xml file.
 func ReadTicket(path string, id int) (Ticket, error) {
-	//returns the ticket from the cache if it is stored in there
-	tempTicket := ticketMap[id]
-	if tempTicket.Id != 0 {
-		return tempTicket, nil
+	if ticketMap[id].Id != 0 {
+		return ticketMap[id], nil
 	}
 
-	//returns ticket from the XML-file and stores it to the cache
 	file, err := ioutil.ReadFile(path + strconv.Itoa(id) + ".xml")
 	if err != nil {
 		return Ticket{}, err
 	}
 	var ticket Ticket
 	xml.Unmarshal(file, &ticket)
-	checkCache(path)
+	checkCache()
 	ticketMap[ticket.Id] = ticket
 	return ticket, nil
 }
@@ -143,7 +153,6 @@ func GetTicketsByEditor(path string, definitionsPath string, editor string) []Ti
 	return tickets
 }
 
-// TODO: We should find another way to get the ticket id counter to remove the need to specify the definitions path
 //returns the actual ticket ID in order to create a new ticket or to get to know the number of the stored tickets.
 func getTicketIDCounter(definitionsPath string) int {
 	file, err := ioutil.ReadFile(definitionsPath)
@@ -189,28 +198,15 @@ func writeToXML(v interface{}, path string) error {
 	return nil
 }
 
-//function clears the cache and returns an error whether it was successful.
-func ClearCache(path string) error {
-	var err error
-	for _, ticket := range ticketMap {
-		newErr := writeToXML(ticket, path+strconv.Itoa(ticket.Id)+".xml")
-		if newErr != nil {
-			err = newErr
-		}
-		delete(ticketMap, ticket.Id)
-	}
-	return err
-}
-
-//function checks if there are too many tickets in the cache and in the case of too many tickets one will be written to the XML-file. Returns an error whether it was successful.
-func checkCache(path string) error {
+//function checks if there are too many tickets in the cache and in the case of too many tickets one will be deleted. Returns an error whether it was successful.
+func checkCache() error {
 	if len(ticketMap) > 10 {
 		randNumber := rand.Intn(len(ticketMap))
 		tmpInt := 1
 		for _, tmpTicket := range ticketMap {
 			if tmpInt == randNumber {
 				delete(ticketMap, tmpTicket.Id)
-				return writeToXML(tmpTicket, path+strconv.Itoa(tmpTicket.Id))
+				return nil
 			}
 			tmpInt++
 		}
@@ -286,7 +282,7 @@ func VerifyUser(path string, name string, password string) (bool, error) {
 func LoginUser(path string, name string, password string, session string) error {
 	usersMap, err := readUsers(path)
 	if err != nil {
-		return nil
+		return errors.New("Wrong path to user file.")
 	}
 	if usersMap[name].Password != password {
 		return errors.New("Username or password is not correct.")
