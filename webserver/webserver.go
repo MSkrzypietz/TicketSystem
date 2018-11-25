@@ -13,6 +13,8 @@ import (
 	//"github.com/stretchr/testify/assert"
 )
 
+var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
+
 func StartServer() {
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/register", ServeUserRegistration)
@@ -30,8 +32,10 @@ func StartServer() {
 }
 
 func ServeIndex(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "index.html"))
-	t.Execute(w, nil)
+	err := templates.ExecuteTemplate(w, "index.html", nil)
+	if err != nil {
+		log.Fatalf("Cannot Get View: %v", err)
+	}
 }
 
 func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
