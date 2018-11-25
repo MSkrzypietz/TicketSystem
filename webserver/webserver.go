@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	//"github.com/stretchr/testify/assert"
 )
 
 var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
@@ -105,36 +104,8 @@ func ServeHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeLogin(w http.ResponseWriter, r *http.Request) {
-	//user := GetUserFromCookie(r)
-	//if !RealUser(user) {
 	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "login.html"))
-	fmt.Println(t.Execute(w, nil))
-	//
-	//	err := r.ParseForm()
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	name := r.PostFormValue("name")
-	//	password := r.PostFormValue("password")
-	//
-	//	validUser := CheckUser(name, password)
-	//
-	//	if validUser {
-	//		fmt.Fprintf(w, "Hello, you're successfully logged in!")
-	//		StartSession(w, name)
-	//		http.Redirect(w, r, "/home/", http.StatusMovedPermanently)
-	//	} else {
-	//		fmt.Fprintf(w, "Something went wrong, please check your inputs")
-	//		http.Redirect(w, r, "/login/", http.StatusMovedPermanently)
-	//	}
-	//	//
-	//	//if err := scanner.Err(); err != nil {
-	//	//	panic(err)
-	//	//}
-	//} else {
-	//	// User is already logged in
-	//	http.Redirect(w, r, "/home/", http.StatusFound)
-	//}
+	t.Execute(w, nil)
 }
 
 func ServeLogout(w http.ResponseWriter, r *http.Request) {
