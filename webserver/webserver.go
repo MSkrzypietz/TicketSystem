@@ -12,12 +12,19 @@ import (
 	"strconv"
 )
 
+type context struct {
+	Title           string
+	ContentTemplate string
+}
+
+var ctx = context{Title: "Home", ContentTemplate: "home.html"}
 var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 func StartServer() {
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/register", ServeUserRegistration)
 	http.HandleFunc("/login", ServeLogin)
+	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/home", ServeHome)
 	http.HandleFunc("/logout", ServeLogout)
@@ -30,8 +37,17 @@ func StartServer() {
 	log.Println("The server has shutdown.")
 }
 
+func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
+	ctx = context{Title: "New Ticket", ContentTemplate: "newticket.html"}
+	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	if err != nil {
+		log.Fatalf("Cannot Get View: %v", err)
+	}
+}
+
 func ServeIndex(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "index.html", nil)
+	ctx = context{Title: "Home", ContentTemplate: "home.html"}
+	err := templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
 	}

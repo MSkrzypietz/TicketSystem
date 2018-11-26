@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-{{template "header"}}
+{{template "header" .}}
 <body class="bg-light">
-    {{template "navbar"}}
+    {{template "navbar" .}}
     <div class="container">
-        <h1 class="display-3">Welcome to the ticket system!</h1>
-        <br>
-        <hr>
-        Now you can...
-        <br>
-        <a href="/createTicket">create a new ticket</a>
+        {{if eq .ContentTemplate "home.html"}}
+            {{template "home"}}
+        {{else if eq .ContentTemplate "newticket.html"}}
+            {{template "newticket"}}
+        {{end}}
     </div>
 
     <!-- Bootstrap js dependencies CDNs -->
