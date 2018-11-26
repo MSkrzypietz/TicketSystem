@@ -22,8 +22,8 @@ var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, 
 
 func StartServer() {
 	http.HandleFunc("/", ServeIndex)
-	http.HandleFunc("/register", ServeUserRegistration)
-	http.HandleFunc("/login", ServeLogin)
+	http.HandleFunc("/signUp", ServeUserRegistration)
+	http.HandleFunc("/signIn", ServeLogin)
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/home", ServeHome)
@@ -78,7 +78,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
 
 	if err == nil {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -93,7 +93,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Refactored into own func
-	if r.PostFormValue("newPassword1") != r.PostFormValue("newPassword2") {
+	if r.PostFormValue("password1") != r.PostFormValue("password2") {
 		log.Println("Aborting registration... The entered passwords don't match.")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -101,16 +101,15 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: More validation check like username == pw? or len(username) > 4? ...
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.PostFormValue("newPassword1")), bcrypt.MinCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.PostFormValue("password1")), bcrypt.MinCost)
 	if err != nil {
 		log.Println(err)
 	}
 
 	// TODO: Handle error from CreateUser
-	XML_IO.CreateUser(config.UsersPath, r.PostFormValue("newUsername"), string(hashedPassword))
-	w.WriteHeader(http.StatusAccepted) // if no error
+	XML_IO.CreateUser(config.UsersPath, r.PostFormValue("username"), string(hashedPassword))
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func ServeHome(w http.ResponseWriter, r *http.Request) {

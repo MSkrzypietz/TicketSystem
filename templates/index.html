@@ -3,7 +3,7 @@
 {{template "header" .}}
 <body class="bg-light">
     {{template "navbar" .}}
-    <div class="container">
+    <div class="container pt-4">
         {{if eq .ContentTemplate "home.html"}}
             {{template "home"}}
         {{else if eq .ContentTemplate "newticket.html"}}
