@@ -1,0 +1,41 @@
+{{define "navbar"}}
+{{template "signin-modal"}}
+{{template "signup-modal"}}
+<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+        <ul class="navbar-nav mr-auto">
+            <li {{if eq .ContentTemplate "home.html"}} class="nav-item active" {{else}} class="nav-item" {{end}}>
+                <a class="nav-link" href="/">Home</a>
+            </li>
+            <li {{if eq .ContentTemplate "newticket.html"}} class="nav-item active" {{else}} class="nav-item" {{end}}>
+                <a class="nav-link" href="/tickets/new">New Ticket</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+            </li>
+        </ul>
+    </div>
+    <div class="mx-auto order-0">
+        <a class="navbar-brand mx-auto" href="#">Awesome Ticket System</a>
+    </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".dual-collapse2">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="modal" data-target="#modalLoginForm">Sign in</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="modal" data-target="#modalRegisterForm">Sign up</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{{end}}

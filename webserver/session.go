@@ -42,8 +42,6 @@ func DestroySession(r *http.Request) {
 }
 
 func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {
-	// TODO: Diese Funktion muss später einen User struct zurückgeben
-
 	sessionID := ""
 	cookie, err := r.Cookie("session-id")
 	if err == nil {

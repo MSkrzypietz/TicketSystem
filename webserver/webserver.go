@@ -10,13 +10,21 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	//"github.com/stretchr/testify/assert"
 )
+
+type context struct {
+	Title           string
+	ContentTemplate string
+}
+
+var ctx = context{Title: "Home", ContentTemplate: "home.html"}
+var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 func StartServer() {
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/register", ServeUserRegistration)
 	http.HandleFunc("/login", ServeLogin)
+	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/home", ServeHome)
 	http.HandleFunc("/logout", ServeLogout)
@@ -29,9 +37,20 @@ func StartServer() {
 	log.Println("The server has shutdown.")
 }
 
+func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
+	ctx = context{Title: "New Ticket", ContentTemplate: "newticket.html"}
+	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	if err != nil {
+		log.Fatalf("Cannot Get View: %v", err)
+	}
+}
+
 func ServeIndex(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "index.html"))
-	t.Execute(w, nil)
+	ctx = context{Title: "Home", ContentTemplate: "home.html"}
+	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	if err != nil {
+		log.Fatalf("Cannot Get View: %v", err)
+	}
 }
 
 func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
@@ -58,9 +77,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	// TODO: Handle errors from CreateTicket
 	_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
 
-	// TODO: This ClearCache call should not be required -> CreateTicket should already persist it
 	if err == nil {
-		XML_IO.ClearCache("data/tickets/ticket")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
@@ -103,36 +120,8 @@ func ServeHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeLogin(w http.ResponseWriter, r *http.Request) {
-	//user := GetUserFromCookie(r)
-	//if !RealUser(user) {
 	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "login.html"))
-	fmt.Println(t.Execute(w, nil))
-	//
-	//	err := r.ParseForm()
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	name := r.PostFormValue("name")
-	//	password := r.PostFormValue("password")
-	//
-	//	validUser := CheckUser(name, password)
-	//
-	//	if validUser {
-	//		fmt.Fprintf(w, "Hello, you're successfully logged in!")
-	//		StartSession(w, name)
-	//		http.Redirect(w, r, "/home/", http.StatusMovedPermanently)
-	//	} else {
-	//		fmt.Fprintf(w, "Something went wrong, please check your inputs")
-	//		http.Redirect(w, r, "/login/", http.StatusMovedPermanently)
-	//	}
-	//	//
-	//	//if err := scanner.Err(); err != nil {
-	//	//	panic(err)
-	//	//}
-	//} else {
-	//	// User is already logged in
-	//	http.Redirect(w, r, "/home/", http.StatusFound)
-	//}
+	t.Execute(w, nil)
 }
 
 func ServeLogout(w http.ResponseWriter, r *http.Request) {
