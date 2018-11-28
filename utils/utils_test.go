@@ -18,3 +18,13 @@ func TestRegExMail(t *testing.T) {
 	assert.True(t, RegExMail(mail4))
 	assert.False(t, RegExMail(mail5))
 }
+
+func TestCheckEmptyXssString(t *testing.T) {
+	text1 := ""
+	text2 := "<script>alert('XSS')</>"
+	text3 := "This is a Message"
+
+	assert.False(t, CheckEmptyXssString(text1))
+	assert.False(t, CheckEmptyXssString(text2))
+	assert.True(t, CheckEmptyXssString(text3))
+}
