@@ -38,19 +38,27 @@ func handleFlags() {
 		}
 	}
 
-	var err error
+	config.UsersPath = *usersFilePath
+	config.ServerCertPath = *serverCertPath
+	config.ServerKeyPath = *serverKeyPath
+	config.TemplatePath = *templatePath
 
-	config.UsersPath, err = validatePath(*usersFilePath, "data/users/users.xml")
-	exitOnError(err, "users")
+	/*
+		TODO: These checks should only be handled when not using the default
+		var err error
 
-	config.ServerCertPath, err = validatePath(*serverCertPath, "https/server.crt")
-	exitOnError(err, "cert")
+		config.UsersPath, err = validatePath(*usersFilePath, "data/users/users.xml")
+		exitOnError(err, "users")
 
-	config.ServerKeyPath, err = validatePath(*serverKeyPath, "https/server.key")
-	exitOnError(err, "key")
+		config.ServerCertPath, err = validatePath(*serverCertPath, "https/server.crt")
+		exitOnError(err, "cert")
 
-	config.TemplatePath, err = validatePath(*templatePath, "templates")
-	exitOnError(err, "templates")
+		config.ServerKeyPath, err = validatePath(*serverKeyPath, "https/server.key")
+		exitOnError(err, "key")
+
+		config.TemplatePath, err = validatePath(*templatePath, "templates")
+		exitOnError(err, "templates")
+	*/
 }
 
 func exitOnError(err error, causer string) {

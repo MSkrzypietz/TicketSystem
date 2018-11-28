@@ -21,6 +21,9 @@ var ctx = context{Title: "Home", ContentTemplate: "home.html"}
 var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 func StartServer() {
+	// TODO: Fix paths and take it from configs..
+	XML_IO.InitDataStorage("data/tickets", "data/users")
+
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/signUp", ServeUserRegistration)
 	http.HandleFunc("/signIn", ServeLogin)

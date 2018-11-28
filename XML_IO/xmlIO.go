@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"strconv"
 	"time"
 )
@@ -41,17 +42,17 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
-//TODO: add this function to the main function at the beginning
+//TODO: Handling of the errors of mkdirall and writetoxml
 //creates directory for the data storage if it doesn´t exist
-func InitDataStorage() {
-	_, err := os.Stat("../data/tickets")
+func InitDataStorage(ticketPath string, usersPath string) {
+	_, err := os.Stat(ticketPath)
 	if err != nil && os.IsNotExist(err) {
-		os.MkdirAll("../data/tickets", 0777)
+		os.MkdirAll(ticketPath, 0777)
 	}
-	_, err = os.Stat("../data/users/users.xml")
+	_, err = os.Stat(path.Join(usersPath, "users.xml"))
 	if err != nil && os.IsNotExist(err) {
-		os.MkdirAll("../data/users", 0777)
-		writeToXML(nil, "../data/users/users.xml")
+		os.MkdirAll(usersPath, 0777)
+		writeToXML(nil, path.Join(usersPath, "users.xml"))
 	}
 }
 
