@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -14,62 +15,117 @@ func TestInitDataStorage(t *testing.T) {
 }
 
 func TestTicketCreation(t *testing.T) {
-	expectedTicket, err := CreateTicket("../data/tickets", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	expectedTicket, err := CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(t, err)
-	actTicket, _ := ReadTicket("../data/tickets", expectedTicket.Id)
-	expectedTicket.XMLName.Local = "Ticket"
-	expectedTicket.MessageList = nil
-	actTicket.MessageList = nil
+
+	ticketID := getTicketIDCounter("definitions.xml")
+	actTicket := ticketMap[ticketID]
+
 	assert.Equal(t, expectedTicket, actTicket)
-	removeCompleteDataStorage()
+
+	assert.Nil(t, ClearCache("../data/tickets/ticket"))
+
+	f, err := ioutil.ReadFile("../data/tickets/ticket" + strconv.Itoa(ticketID) + ".xml")
+	assert.NotNil(t, f)
+	assert.Nil(t, err)
+
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", ticketID)
+	ClearCache("../data/tickets/ticket")
+	writeToXML(0, "definitions.xml")
 }
 
 func TestAddMessage(t *testing.T) {
 	createdTicket, err := CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(t, err)
-	_, err1 := AddMessage("../data/tickets", createdTicket, "4262", "please restart")
-	expectedTicket, err2 := AddMessage("../data/tickets", createdTicket, "client@dhbw.de", "Thank, it worked!")
+
+	_, err1 := AddMessage("../data/tickets/ticket", createdTicket, "4262", "please restart")
+	expectedTicket, err2 := AddMessage("../data/tickets/ticket", createdTicket, "client@dhbw.de", "Thank, it worked!")
 	assert.Nil(t, err1)
 	assert.Nil(t, err2)
-	expectedTicket.XMLName.Local = "Ticket"
-	actTicket, err := ReadTicket("../data/tickets", expectedTicket.Id)
-	expectedTicket.MessageList[0].CreationDate = actTicket.MessageList[0].CreationDate
-	expectedTicket.MessageList[1].CreationDate = actTicket.MessageList[1].CreationDate
+
+	actTicket, err := ReadTicket("../data/tickets/ticket", expectedTicket.Id)
 	assert.Equal(t, expectedTicket, actTicket)
-	removeCompleteDataStorage()
+
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", expectedTicket.Id)
+	ClearCache("../data/tickets/ticket")
 }
 
-func TestStoreTicket(t *testing.T) {
-	expectedTicket := Ticket{XMLName: xml.Name{"", "Ticket"}, Id: 4, Client: "client4@dhbw.de", Reference: "PC problem", Status: 0, Editor: "0"}
-	ticketMap[expectedTicket.Id] = expectedTicket
-	StoreTicket("../data/tickets", expectedTicket)
-	assert.Equal(t, Ticket{}, ticketMap[expectedTicket.Id])
-	actTicket, _ := ReadTicket("../data/tickets", expectedTicket.Id)
-	assert.Equal(t, expectedTicket, actTicket)
-	removeCompleteDataStorage()
-}
+func TestTicketStoring(t *testing.T) {
+	expectedTicketFour := Ticket{}
+	for tmpInt := 1; tmpInt <= 9; tmpInt++ {
+		actTicket, err := CreateTicket("../data/tickets/ticket", "definitions.xml", "client"+strconv.Itoa(tmpInt)+"@dhbw.de", "PC problem", "Pc does not start anymore")
+		assert.Nil(t, err)
+		if tmpInt == 4 {
+			expectedTicketFour = actTicket
+		}
+	}
 
-func TestReadTicket(t *testing.T) {
-	expectedTicket := Ticket{XMLName: xml.Name{"", "Ticket"}, Id: 4, Client: "client4@dhbw.de", Reference: "PC problem", Status: 0, Editor: "0"}
-	StoreTicket("../data/tickets", expectedTicket)
-	actTicket, _ := ReadTicket("../data/tickets", expectedTicket.Id)
-	assert.Equal(t, expectedTicket, actTicket)
-	actTicket, _ = ReadTicket("../data/tickets", expectedTicket.Id)
-	assert.Equal(t, ticketMap[expectedTicket.Id], actTicket)
-	_, err := ReadTicket("../data/tickets", -99)
+	assert.Equal(t, expectedTicketFour, ticketMap[4])
+
+	_, err := ioutil.ReadFile("../data/tickets/ticket4.xml")
 	assert.NotNil(t, err)
-	removeCompleteDataStorage()
+
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client10@dhbw.de", "PC problem", "Pc does not start anymore")
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client11@dhbw.de", "PC problem", "Pc does not start anymore")
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client12@dhbw.de", "PC problem", "Pc does not start anymore")
+	assert.Equal(t, 11, len(ticketMap))
+
+	ClearCache("../data/tickets/ticket")
+	assert.Equal(t, 0, len(ticketMap))
+
+	actTicket, err := ReadTicket("../data/tickets/ticket", 4)
+	var expectedMsg []Message
+	expectedMsg = append(expectedMsg, Message{Actor: "client4@dhbw.de", Text: "Pc does not start anymore", CreationDate: actTicket.MessageList[0].CreationDate})
+	expectedTicketFour = Ticket{XMLName: xml.Name{"", "Ticket"}, Id: 4, Client: "client4@dhbw.de", Reference: "PC problem", Status: 0, Editor: "0", MessageList: expectedMsg}
+	expectedTicketFour.XMLName.Local = "Ticket"
+	assert.Equal(t, expectedTicketFour, actTicket)
+
+	ClearCache("../data/tickets/ticket")
+	for tmpInt := 1; tmpInt <= 12; tmpInt++ {
+		DeleteTicket("../data/tickets/ticket", "definitions.xml", tmpInt)
+	}
+	writeToXML(0, "definitions.xml")
 }
 
+func TestTicketReading(t *testing.T) {
+	expectedTicket, _ := CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	ticketID := getTicketIDCounter("definitions.xml")
+	actTicket, err := ReadTicket("../data/tickets/ticket", ticketID)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expectedTicket, actTicket)
+
+	ClearCache("../data/tickets/ticket")
+	actTicket, err = ReadTicket("../data/tickets/ticket", ticketID)
+	assert.Nil(t, err)
+	var msgList []Message
+	msgList = append(msgList, Message{Actor: "client@dhbw.de", Text: "PC does not start anymore. Any idea?", CreationDate: actTicket.MessageList[0].CreationDate})
+	expectedTicket = Ticket{XMLName: xml.Name{"", "Ticket"}, Id: ticketID, Client: "client@dhbw.de", Reference: "PC problem", Editor: "0", Status: 0, MessageList: msgList}
+	assert.Equal(t, expectedTicket, actTicket)
+
+	tmpTicket, err := ReadTicket("../data/tickets/ticket", -99)
+	assert.NotNil(t, err)
+	assert.Equal(t, tmpTicket, Ticket{})
+
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", ticketID)
+	writeToXML(0, "definitions.xml")
+}
+
+/*
 func TestIDCounter(t *testing.T) {
 	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Equal(t, 2, getTicketIDCounter("definitions.xml"))
-	assert.Equal(t, -1, getTicketIDCounter("/\\!?$&"))
-	removeCompleteDataStorage()
-}
 
-func TestGetTicketsByStatus(t *testing.T) {
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	writeToXML(0, "definitions.xml")
+}
+*/
+
+func TestTicketsByStatus(t *testing.T) {
 	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	ChangeStatus("../data/tickets/ticket", getTicketIDCounter("definitions.xml"), 1)
@@ -83,10 +139,14 @@ func TestGetTicketsByStatus(t *testing.T) {
 	for _, element := range tickets {
 		assert.Equal(t, 1, element.Status)
 	}
-	removeCompleteDataStorage()
+
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	writeToXML(0, "definitions.xml")
 }
 
-func TestGetTicketByEditor(t *testing.T) {
+func TestTicketByEditor(t *testing.T) {
 	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	ChangeEditor("../data/tickets/ticket", getTicketIDCounter("definitions.xml")-1, "423")
@@ -100,7 +160,11 @@ func TestGetTicketByEditor(t *testing.T) {
 	for _, element := range tickets {
 		assert.Equal(t, "22", element.Editor)
 	}
-	removeCompleteDataStorage()
+
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	writeToXML(0, "definitions.xml")
 }
 
 func TestChangeEditor(t *testing.T) {
@@ -108,8 +172,10 @@ func TestChangeEditor(t *testing.T) {
 	ChangeEditor("../data/tickets/ticket", getTicketIDCounter("definitions.xml"), "4321")
 	ticket, _ := ReadTicket("../data/tickets/ticket", getTicketIDCounter("definitions.xml"))
 	assert.Equal(t, "4321", ticket.Editor)
-	assert.NotNil(t, ChangeEditor("../data/tickets/ticket", -99, "1234"))
-	removeCompleteDataStorage()
+
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	writeToXML(0, "definitions.xml")
 }
 
 func TestChangeStatus(t *testing.T) {
@@ -118,19 +184,28 @@ func TestChangeStatus(t *testing.T) {
 	ticket, _ := ReadTicket("../data/tickets/ticket", getTicketIDCounter("definitions.xml"))
 	assert.Equal(t, 2, ticket.Status)
 
-	assert.NotNil(t, ChangeStatus("../data/tickets/ticket", -99, -1))
-	removeCompleteDataStorage()
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	writeToXML(0, "definitions.xml")
 }
 
-func TestDeleteTicket(t *testing.T) {
-	expectedTicket := Ticket{XMLName: xml.Name{"", "Ticket"}, Id: 1, Client: "client4@dhbw.de", Reference: "PC problem", Status: 0, Editor: "0"}
-	StoreTicket("../data/tickets", expectedTicket)
-	ReadTicket("../data/tickets", expectedTicket.Id)
-	assert.Equal(t, expectedTicket, ticketMap[expectedTicket.Id])
-	assert.Nil(t, DeleteTicket("../data/tickets", "definitions.xml", expectedTicket.Id))
-	assert.Equal(t, Ticket{}, ticketMap[1])
-	assert.NotNil(t, DeleteTicket("../data/tickets", "definitinos.xml", -99))
-	removeCompleteDataStorage()
+func TestDeleting(t *testing.T) {
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "Computer", "PC not working")
+	assert.Equal(t, 1, len(ticketMap))
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", getTicketIDCounter("definitions.xml"))
+	assert.Equal(t, 0, len(ticketMap))
+
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "Computer", "PC not working")
+	ClearCache("../data/tickets/ticket")
+	assert.Equal(t, 0, len(ticketMap))
+	_, err := ioutil.ReadFile("../data/tickets/ticket1.xml")
+	assert.Nil(t, err)
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", 1)
+	_, err = ioutil.ReadFile("../data/tickets/ticket1.xml")
+	assert.NotNil(t, err)
+
+	ClearCache("../data/tickets/ticket")
+	writeToXML(0, "definitions.xml")
 }
 
 func TestMerging(t *testing.T) {
@@ -155,7 +230,6 @@ func TestMerging(t *testing.T) {
 
 	assert.Nil(t, MergeTickets("../data/tickets/ticket", "definitions.xml", firstTicket.Id, secondTicket.Id))
 	actTicket, _ := ReadTicket("../data/tickets/ticket", firstTicket.Id)
-	expectedTicket.XMLName.Local = "Ticket"
 	assert.Equal(t, expectedTicket, actTicket)
 
 	//merge tickets with two different editors
@@ -164,26 +238,52 @@ func TestMerging(t *testing.T) {
 	ChangeEditor("../data/tickets/ticket", secondTicketID, "412")
 	assert.NotNil(t, MergeTickets("../data/tickets/ticket", "definitions.xml", firstTicket.Id, secondTicketID))
 
-	assert.NotNil(t, MergeTickets("../data/tickets/ticket", "definitions.xml", -1, 1))
-	assert.NotNil(t, MergeTickets("../data/tickets/ticket", "definitions.xml", 1, -1))
-
-	removeCompleteDataStorage()
+	ClearCache("../data/tickets/ticket")
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", firstTicket.Id)
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", secondTicket.Id)
+	writeToXML(0, "definitions.xml")
 }
 
-func TestCheckCache(t *testing.T) {
-	for tmpInt := 1; tmpInt <= 12; tmpInt++ {
-		CreateTicket("../data/tickets", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	}
+func TestClearCache(t *testing.T) {
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Equal(t, 3, len(ticketMap))
+
+	ClearCache("../data/tickets/ticket")
 	assert.Equal(t, 0, len(ticketMap))
-	for tmpInt := 1; tmpInt <= 2; tmpInt++ {
-		ReadTicket("../data/tickets", tmpInt)
+
+	_, err1 := ioutil.ReadFile("../data/tickets/ticket1.xml")
+	assert.Nil(t, err1)
+
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", 1)
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", 2)
+	DeleteTicket("../data/tickets/ticket", "definitions.xml", 3)
+	ClearCache("../data/tickets/ticket")
+	writeToXML(0, "definitions.xml")
+}
+
+// TODO: Wieso bleibt len(ticketMap) = 11 nachdem 2 weitere tickets erstellt werden? + Es werden bei mir nicht alle tickets gelöscht  -> Groese des Caches ist auf 11 festgelegt
+func TestCheckCache(t *testing.T) {
+	for tmpInt := 1; tmpInt <= 9; tmpInt++ {
+		CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	}
-	assert.Equal(t, 2, len(ticketMap))
-	for tmpInt := 1; tmpInt <= 12; tmpInt++ {
-		ReadTicket("../data/tickets", tmpInt)
-	}
+
+	assert.Equal(t, 9, len(ticketMap))
+
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Equal(t, 11, len(ticketMap))
-	removeCompleteDataStorage()
+
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Equal(t, 11, len(ticketMap))
+
+	ClearCache("../data/tickets/ticket")
+	for tmpInt := 1; tmpInt <= 13; tmpInt++ {
+		DeleteTicket("../data/tickets/ticket", "definitions.xml", tmpInt)
+	}
+	writeToXML(0, "definitions.xml")
 }
 
 func TestCreateAndStoreUser(t *testing.T) {
@@ -197,9 +297,6 @@ func TestCreateAndStoreUser(t *testing.T) {
 	expectedUser = append(expectedUser, User{Username: "mustermann", Password: "musterpasswort"})
 	expected := Userlist{User: expectedUser}
 	assert.Equal(t, expected, userlist)
-
-	_, err = CreateUser("../data/users/u", "test", "test")
-	assert.NotNil(t, err)
 }
 
 func TestReadUser(t *testing.T) {
@@ -226,9 +323,6 @@ func TestCheckUser(t *testing.T) {
 	tmpBool, err = CheckUser("../data/users/users.xml", "muster")
 	assert.Nil(t, err)
 	assert.True(t, tmpBool)
-
-	_, err = CheckUser("../data/users/u", "test")
-	assert.NotNil(t, err)
 }
 
 func TestVerifyUser(t *testing.T) {
@@ -239,9 +333,6 @@ func TestVerifyUser(t *testing.T) {
 	tmpBool, err = VerifyUser("../data/users/users.xml", "mustermann", "xxx")
 	assert.False(t, tmpBool)
 	assert.Nil(t, err)
-
-	_, err = VerifyUser("../data/users/u", "test", "test")
-	assert.NotNil(t, err)
 }
 
 func TestLoginUser(t *testing.T) {
@@ -250,8 +341,6 @@ func TestLoginUser(t *testing.T) {
 	assert.NotNil(t, LoginUser("../data/users/users.xml", "mustermann", "falschespasswort", "1234"))
 	usersMap, _ := readUsers("../data/users/users.xml")
 	assert.Equal(t, "1234", usersMap["mustermann"].SessionID)
-
-	assert.NotNil(t, LoginUser("../data/users/u", "test", "124", "1234"))
 }
 
 func TestLogoutUser(t *testing.T) {
@@ -263,8 +352,6 @@ func TestLogoutUser(t *testing.T) {
 	usersmap, _ = readUsers("../data/users/users.xml")
 	assert.Equal(t, "", usersmap["mustermann"].SessionID)
 	assert.NotNil(t, LogoutUser("../data/users/users.xml", "falscherName"))
-
-	assert.NotNil(t, LogoutUser("../data/users/u", "test"))
 }
 
 func TestGetUserSession(t *testing.T) {

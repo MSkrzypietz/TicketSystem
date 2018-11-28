@@ -12,3 +12,8 @@ func TestCreateUUID(t *testing.T) {
 	assert.Equal(t, 64, len(uuid1))
 	assert.Equal(t, 64, len(uuid2))
 }
+
+
+func TestGetUserFromCookie(t *testing.T) {
+
+}
