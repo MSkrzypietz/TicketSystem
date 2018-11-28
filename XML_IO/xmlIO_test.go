@@ -10,7 +10,7 @@ import (
 
 func TestInitDataStorage(t *testing.T) {
 	os.RemoveAll("../data")
-	InitDataStorage()
+	InitDataStorage("../data/tickets", "../data/users")
 }
 
 func TestTicketCreation(t *testing.T) {
@@ -285,7 +285,7 @@ func TestGetUserBySession(t *testing.T) {
 
 func removeCompleteDataStorage() {
 	os.RemoveAll("../data")
-	InitDataStorage()
+	InitDataStorage("../data/tickets", "../data/users")
 	ticketMap = make(map[int]Ticket)
 	writeToXML(0, "definitions.xml")
 }
