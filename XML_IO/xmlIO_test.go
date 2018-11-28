@@ -9,6 +9,11 @@ import (
 	"testing"
 )
 
+func TestInitDataStorage(t *testing.T) {
+	os.RemoveAll("../data")
+	InitDataStorage("../data/tickets", "../data/users")
+}
+
 func TestTicketCreation(t *testing.T) {
 	expectedTicket, err := CreateTicket("../data/tickets/ticket", "definitions.xml", "client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(t, err)
@@ -363,4 +368,11 @@ func TestGetUserBySession(t *testing.T) {
 	assert.Equal(t, expectedUser, GetUserBySession("../data/users/users.xml", "1234"))
 	assert.Equal(t, User{}, GetUserBySession("../data/users/users.xml", ""))
 	assert.Equal(t, User{}, GetUserBySession("../data/users/users.xml", "FalscheSession"))
+}
+
+func removeCompleteDataStorage() {
+	os.RemoveAll("../data")
+	InitDataStorage("../data/tickets", "../data/users")
+	ticketMap = make(map[int]Ticket)
+	writeToXML(0, "definitions.xml")
 }
