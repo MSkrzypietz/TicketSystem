@@ -34,6 +34,7 @@ func StartServer() {
 	http.HandleFunc("/logout", ServeLogout)
 
 	log.Printf("The server is starting to listen on port %d", config.Port)
+	log.Printf("https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
 	if err != nil {
 		panic(err)
@@ -66,14 +67,17 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.PostFormValue("email") == "" {
-		t, _ := template.ParseFiles(path.Join(config.TemplatePath, "newticket.html"))
-		t.Execute(w, nil)
+		t, errTemplate := template.ParseFiles(path.Join(config.TemplatePath, "newticket.html"))
+		if errTemplate != nil {
+			t.Execute(w, nil)
+		} else {
+			log.Printf("Error accured with parsing html template newticket.html")
+		}
 		return
 	}
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
 	}
 
 	email := r.PostFormValue("email")
@@ -89,13 +93,14 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			http.Redirect(w, r, "/", http.StatusMovedPermanently)
 		} else {
+			log.Printf("Error accured while creating a ticket: %d", err)
 			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 	} else {
 		// Inputs not okay
 		fmt.Fprintf(w, "Your Inputs are not valid. Please check your inputs and try again")
 	}
-
 }
 
 func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
@@ -106,8 +111,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Refactored into own func
-	if r.PostFormValue("password1") != r.PostFormValue("password2") {
+	if utils.CheckEqualStrings(r.PostFormValue("password1"), r.PostFormValue("password2")) {
 		log.Println("Aborting registration... The entered passwords don't match.")
 		w.WriteHeader(http.StatusBadRequest)
 		return

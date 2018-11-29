@@ -73,3 +73,13 @@ func TestCheckPasswdFormal(t *testing.T) {
 	assert.False(t, CheckPasswdFormal(passwd5))
 	assert.False(t, CheckPasswdFormal(passwd6))
 }
+
+func TestCheckEqualStrings(t *testing.T) {
+	str1 := ""
+	str2 := "hello"
+	str3 := "test"
+
+	assert.False(t, CheckEqualStrings(str1, str1))
+	assert.False(t, CheckEqualStrings(str2, str3))
+	assert.True(t, CheckEqualStrings(str3, str3))
+}
