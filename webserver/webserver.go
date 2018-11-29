@@ -3,6 +3,7 @@ package webserver
 import (
 	"TicketSystem/XML_IO"
 	"TicketSystem/config"
+	"TicketSystem/utils"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
@@ -75,16 +76,26 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Add validation checks: empty strings, too long?, email regex check
+	email := r.PostFormValue("email")
+	subject := r.PostFormValue("subject")
+	message := r.PostFormValue("message")
 
-	// TODO: Handle errors from CreateTicket
-	_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", r.PostFormValue("email"), r.PostFormValue("subject"), r.PostFormValue("message"))
+	if utils.RegExMail(email) && utils.CheckEmptyXssString(subject) && utils.CheckEmptyXssString(message) {
+		// Inputs okay
 
-	if err == nil {
-		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+		// TODO: Handle errors from CreateTicket
+		_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", email, subject, message)
+
+		if err == nil {
+			http.Redirect(w, r, "/", http.StatusMovedPermanently)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
+		// Inputs not okay
+		fmt.Fprintf(w, "Your Inputs are not valid. Please check your inputs and try again")
 	}
+
 }
 
 func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
@@ -102,17 +113,28 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: More validation check like username == pw? or len(username) > 4? ...
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password1")
+	if utils.CheckUsernameFormal(username) && utils.CheckPasswdFormal(password) {
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(r.PostFormValue("password1")), bcrypt.MinCost)
-	if err != nil {
-		log.Println(err)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+		if err != nil {
+			log.Println(err)
+		}
+
+		_, errUser := XML_IO.CreateUser(config.UsersPath, username, string(hashedPassword))
+		if errUser != nil {
+			log.Println("Creating User failed, formal check of uname an passwd is valid")
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+
+	} else {
+		// Username or Password are formally not valid
+		log.Println("Formal check of uname and passwd failed.")
+		return
 	}
 
-	// TODO: Handle error from CreateUser
-	XML_IO.CreateUser(config.UsersPath, r.PostFormValue("username"), string(hashedPassword))
-
-	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func ServeHome(w http.ResponseWriter, r *http.Request) {
