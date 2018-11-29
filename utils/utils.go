@@ -71,3 +71,16 @@ func CheckPasswdFormal(passwd string) bool {
 	}
 
 }
+
+func CheckEqualStrings(string1, string2 string) bool {
+	// Check strings on empty strings and matching
+	if string1 != "" && string2 != "" {
+		if string1 == string2 {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
+}
