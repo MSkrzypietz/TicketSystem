@@ -3,8 +3,8 @@ package webserver
 import (
 	"TicketSystem/XML_IO"
 	"TicketSystem/config"
+	"TicketSystem/utils"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 )
@@ -15,7 +15,7 @@ func StartSession(w http.ResponseWriter, username string) {
 		panic(err)
 	}
 	defer f.Close()
-	cookieId := CreateUUID(64)
+	cookieId := utils.CreateUUID(64)
 	if _, err = f.WriteString(username + "," + cookieId); err != nil {
 		panic(err)
 	}
@@ -49,14 +49,4 @@ func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {
 	}
 
 	return XML_IO.GetUserBySession(config.UsersPath, sessionID), err
-}
-
-func CreateUUID(length int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-	byteSlice := make([]byte, length)
-	for i := range byteSlice {
-		byteSlice[i] = letters[rand.Int63()%int64(len(letters))]
-	}
-	return string(byteSlice)
 }
