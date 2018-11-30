@@ -4,7 +4,6 @@ import (
 	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"TicketSystem/utils"
-	"fmt"
 	"net/http"
 	"os"
 )
@@ -28,17 +27,16 @@ func CreateCookie(w http.ResponseWriter, id string) {
 		Value:  id,
 		MaxAge: 60 * 60,
 	})
-	fmt.Fprintln(w, "Cookie set")
+	//log.Println(w, "Cookie set")
 }
 
-func DestroySession(r *http.Request) {
-	cookie, err := r.Cookie("session-id")
-	if err != nil {
-		panic(err)
+func DestroySession(w http.ResponseWriter) {
+	cookie := &http.Cookie{
+		Name:   "session-id",
+		Value:  "",
+		MaxAge: -1,
 	}
-	cookie.Name = "Deleted"
-	cookie.Value = "Unused"
-	cookie.MaxAge = -1
+	http.SetCookie(w, cookie)
 }
 
 func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {

@@ -3,6 +3,7 @@ package XML_IO
 import (
 	"encoding/xml"
 	"errors"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -285,8 +286,9 @@ func LoginUser(path string, name string, password string, session string) error 
 	if err != nil {
 		return errors.New("Wrong path to user file.")
 	}
-	if usersMap[name].Password != password {
-		return errors.New("Username or password is not correct.")
+	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
+	if err != nil {
+		return err
 	}
 	tmpUser := usersMap[name]
 	tmpUser.SessionID = session
