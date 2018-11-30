@@ -20,10 +20,10 @@ type context struct {
 	HeaderTitle     string
 	ContentTemplate string
 	IsSignedIn      bool
-	ShowSignIn      bool
+	ShowSignInModal bool
 }
 
-var ctx = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: false, ShowSignIn: true}
+var ctx = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: false, ShowSignInModal: true}
 var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 func StartServer() {
@@ -51,12 +51,12 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 	//TODO: Replace (the following 5 lines) with wrapper that checks if its a valid session (to access restrained resources
 	_, err := GetUserFromCookie(r)
 	if err != nil {
-		ctx.ShowSignIn = true
+		ctx.ShowSignInModal = true
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
 		return
 	}
 
-	ctx = context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, ShowSignIn: false}
+	ctx = context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, ShowSignInModal: false}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
@@ -65,7 +65,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 
 func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
 	_, err := GetUserFromCookie(r)
-	ctx = context{HeaderTitle: "New Ticket", ContentTemplate: "newticket.html", IsSignedIn: err == nil, ShowSignIn: false}
+	ctx = context{HeaderTitle: "New Ticket", ContentTemplate: "newticket.html", IsSignedIn: err == nil, ShowSignInModal: false}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
@@ -74,7 +74,7 @@ func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
 
 func ServeIndex(w http.ResponseWriter, r *http.Request) {
 	_, err := GetUserFromCookie(r)
-	ctx = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: err == nil, ShowSignIn: false}
+	ctx = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: err == nil, ShowSignInModal: false}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
