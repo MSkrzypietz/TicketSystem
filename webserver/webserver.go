@@ -13,12 +13,17 @@ import (
 	"strconv"
 )
 
+//TODO: Global context won t work when multiple users are requesting stuff
+// Probably need to create a SessionManager struct and perhaps a router struct
+// Remove context all together, instead have different name when executing a template
 type context struct {
-	Title           string
+	HeaderTitle     string
 	ContentTemplate string
+	IsSignedIn      bool
+	ShowSignIn      bool
 }
 
-var ctx = context{Title: "Home", ContentTemplate: "home.html"}
+var ctx = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: false, ShowSignIn: true}
 var templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 func StartServer() {
@@ -27,11 +32,11 @@ func StartServer() {
 
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/signUp", ServeUserRegistration)
-	http.HandleFunc("/signIn", ServeLogin)
+	http.HandleFunc("/signIn", ServeSignIn)
+	http.HandleFunc("/signOut", ServeSignOut)
+	http.HandleFunc("/tickets/", ServeTickets)
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
-	http.HandleFunc("/home", ServeHome)
-	http.HandleFunc("/logout", ServeLogout)
 
 	log.Printf("The server is starting to listen on port %d", config.Port)
 	log.Printf("https://localhost:%d", config.Port)
@@ -42,17 +47,35 @@ func StartServer() {
 	log.Println("The server has shutdown.")
 }
 
+func ServeTickets(w http.ResponseWriter, r *http.Request) {
+	//TODO: Replace (the following 5 lines) with wrapper that checks if its a valid session (to access restrained resources
+	_, err := GetUserFromCookie(r)
+	if err != nil {
+		ctx.ShowSignIn = true
+		err = templates.ExecuteTemplate(w, "index.html", ctx)
+		return
+	}
+
+	ctx = context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, ShowSignIn: false}
+	err = templates.ExecuteTemplate(w, "index.html", ctx)
+	if err != nil {
+		log.Fatalf("Cannot Get View: %v", err)
+	}
+}
+
 func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
-	ctx = context{Title: "New Ticket", ContentTemplate: "newticket.html"}
-	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	_, err := GetUserFromCookie(r)
+	ctx = context{HeaderTitle: "New Ticket", ContentTemplate: "newticket.html", IsSignedIn: err == nil, ShowSignIn: false}
+	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
 	}
 }
 
 func ServeIndex(w http.ResponseWriter, r *http.Request) {
-	ctx = context{Title: "Home", ContentTemplate: "home.html"}
-	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	_, err := GetUserFromCookie(r)
+	ctx = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: err == nil, ShowSignIn: false}
+	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
 	}
@@ -111,7 +134,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if utils.CheckEqualStrings(r.PostFormValue("password1"), r.PostFormValue("password2")) {
+	if !utils.CheckEqualStrings(r.PostFormValue("password1"), r.PostFormValue("password2")) {
 		log.Println("Aborting registration... The entered passwords don't match.")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -119,8 +142,9 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password1")
-	if utils.CheckUsernameFormal(username) && utils.CheckPasswdFormal(password) {
-
+	//TODO: uncomment in production
+	// if utils.CheckUsernameFormal(username) && utils.CheckPasswdFormal(password) {
+	if true {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 		if err != nil {
 			log.Println(err)
@@ -141,18 +165,28 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func ServeHome(w http.ResponseWriter, r *http.Request) {
-	//user := GetUserFromCookie(r)
+func ServeSignIn(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	http.Redirect(w, r, "/login", http.StatusFound)
+	uuid := utils.CreateUUID(64) // TODO: put this in LoginUser
+	err = XML_IO.LoginUser(config.UsersPath, r.PostFormValue("username"), r.PostFormValue("password"), uuid)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	CreateCookie(w, uuid) // TODO: put this in LoginUser
+
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusFound)
 }
 
-func ServeLogin(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles(path.Join(config.TemplatePath, "login.html"))
-	t.Execute(w, nil)
-}
+func ServeSignOut(w http.ResponseWriter, r *http.Request) {
+	DestroySession(w)
 
-func ServeLogout(w http.ResponseWriter, r *http.Request) {
-	DestroySession(r)
-	fmt.Fprintf(w, "You're logged out succesfully")
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }

@@ -10,8 +10,8 @@
             <li {{if eq .ContentTemplate "newticket.html"}} class="nav-item active" {{else}} class="nav-item" {{end}}>
                 <a class="nav-link" href="/tickets/new">New Ticket</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Link</a>
+            <li {{if eq .ContentTemplate "tickets.html"}} class="nav-item active" {{else}} class="nav-item" {{end}}>
+                <a class="nav-link" href="/tickets/">Tickets</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#">Link</a>
@@ -27,14 +27,21 @@
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".dual-collapse2">
         <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
         <ul class="navbar-nav ml-auto">
+            {{if .IsSignedIn}}
+                <li class="nav-item">
+                    <a class="nav-link" href="/signOut">Sign out</a>
+                </li>
+            {{else}}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="modal" data-target="#modalLoginForm">Sign in</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="modal" data-target="#modalRegisterForm">Sign up</a>
             </li>
+            {{end}}
         </ul>
     </div>
 </nav>
