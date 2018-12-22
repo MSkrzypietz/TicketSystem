@@ -12,6 +12,10 @@ import (
 	"time"
 )
 
+//TODO: (Kleinigkeit - nicht dringend): In users.xml gibt es 2 "root" Elemente? <UserList> oder <users> kann entfernt werden
+
+//TODO: Error handling bei allen Warnungen
+
 //struct that defines a ticket with the parameters ID, mail of the client, reference, actual status, editor and a list of all messages
 type Ticket struct {
 	XMLName     xml.Name  `xml:"Ticket"`

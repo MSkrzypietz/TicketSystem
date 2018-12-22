@@ -16,6 +16,7 @@ import (
 //TODO: Global context won t work when multiple users are requesting stuff
 // Probably need to create a SessionManager struct and perhaps a router struct
 // Remove context all together, instead have different name when executing a template
+
 type context struct {
 	HeaderTitle     string
 	ContentTemplate string
@@ -38,8 +39,7 @@ func StartServer() {
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 
-	log.Printf("The server is starting to listen on port %d", config.Port)
-	log.Printf("https://localhost:%d", config.Port)
+	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
 	if err != nil {
 		panic(err)
