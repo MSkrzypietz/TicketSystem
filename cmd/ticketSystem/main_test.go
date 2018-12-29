@@ -62,38 +62,16 @@ func TestExistsPath(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestValidatePath(t *testing.T) {
-	actual, err := validatePath(" ", ".")
-	assert.Equal(t, ".", actual)
-	assert.NotNil(t, err)
-
-	actual, err = validatePath("test", ".")
-	assert.Equal(t, ".", actual)
-	assert.NotNil(t, err)
-
-	actual, err = validatePath("main.go", ".")
-	assert.Equal(t, "main.go", actual)
-	assert.Nil(t, err)
-}
-
-// This test is inspired by Andrew Gerrand of the Go team
-// Source: https://talks.golang.org/2014/testing.slide#23
-/*
-func TestExitOnError(t *testing.T) {
-	if os.Getenv("CRASH_TEST") == "1" {
-		err := fmt.Errorf("test error")
-		exitOnError(err, "users")
-		exitOnError(err, "cert")
-		exitOnError(err, "key")
-		exitOnError(err, "templates")
-		return
-	}
-	cmd := exec.Command(os.Args[0], "-test.run=TestExitOnError")
-	cmd.Env = append(os.Environ(), "CRASH_TEST=1")
-	err := cmd.Run()
-	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
-		return
-	}
-	t.Fatalf("process ran with err %v, want exit status 3", err)
-}
-*/
+//func TestCheckPath(t *testing.T) {
+//	actual, err := checkPath(" ", ".")
+//	assert.Equal(t, ".", actual)
+//	assert.NotNil(t, err)
+//
+//	actual, err = validatePath("test", ".")
+//	assert.Equal(t, ".", actual)
+//	assert.NotNil(t, err)
+//
+//	actual, err = validatePath("main.go", ".")
+//	assert.Equal(t, "main.go", actual)
+//	assert.Nil(t, err)
+//}

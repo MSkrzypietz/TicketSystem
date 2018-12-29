@@ -46,5 +46,5 @@ func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {
 		sessionID = cookie.Value
 	}
 
-	return XML_IO.GetUserBySession(config.UsersPath, sessionID), err
+	return XML_IO.GetUserBySession(config.UsersFilePath, sessionID), err
 }

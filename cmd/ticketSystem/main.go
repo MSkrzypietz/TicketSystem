@@ -14,6 +14,12 @@ import (
 	"strings"
 )
 
+type path struct {
+	userInput string
+	configVar *string
+	varName   string
+}
+
 func main() {
 	handleFlags()
 
@@ -21,52 +27,35 @@ func main() {
 }
 
 func handleFlags() {
-	usersFilePath := flag.String("users", "data/users/users.xml", "Path to users.xml file")
-	serverCertPath := flag.String("cert", "etc/server.crt", "Path to server certificate")
-	serverKeyPath := flag.String("key", "etc/server.key", "Path to server key")
-	templatePath := flag.String("templates", "templates", "Path to templates folder")
-	port := flag.Int("port", 443, "Port on which the server should run")
+	dataPath := flag.String("data", config.DataPath, "Path to data folder")
+	serverCertPath := flag.String("cert", config.ServerCertPath, "Path to server certificate")
+	serverKeyPath := flag.String("key", config.ServerKeyPath, "Path to server key")
+	templatePath := flag.String("templates", config.TemplatePath, "Path to templates folder")
+	port := flag.Int("port", config.Port, "Port on which the server should run")
 	flag.Parse()
 
-	config.Port = *port
-	if ok, err := validatePort(config.Port); !ok {
-		log.Println(err)
-		config.Port = 443
-
-		if ok, err := checkPortAvailability(config.Port); !ok {
-			log.Printf("the default port 443 is also in use and hence the program will terminate: %v", err)
-			os.Exit(0)
-		}
-	}
-
-	config.UsersPath = *usersFilePath
-	config.ServerCertPath = *serverCertPath
-	config.ServerKeyPath = *serverKeyPath
-	config.TemplatePath = *templatePath
-
-	/*
-		TODO: These checks should only be handled when not using the default
-		var err error
-
-		config.UsersPath, err = validatePath(*usersFilePath, "data/users/users.xml")
-		exitOnError(err, "users")
-
-		config.ServerCertPath, err = validatePath(*serverCertPath, "https/server.crt")
-		exitOnError(err, "cert")
-
-		config.ServerKeyPath, err = validatePath(*serverKeyPath, "https/server.key")
-		exitOnError(err, "key")
-
-		config.TemplatePath, err = validatePath(*templatePath, "templates")
-		exitOnError(err, "templates")
-	*/
+	handlePort(*port)
+	handlePathInputs(
+		path{*dataPath, &config.DataPath, "data"},
+		path{*serverCertPath, &config.ServerCertPath, "cert"},
+		path{*serverKeyPath, &config.ServerKeyPath, "key"},
+		path{*templatePath, &config.TemplatePath, "templates"},
+	)
 }
 
-func exitOnError(err error, causer string) {
-	if err != nil {
-		log.Fatal(fmt.Errorf("Value of flag "+causer+" is invalid: %v", err))
-		os.Exit(1)
+func handlePort(port int) {
+	if ok, err := validatePort(port); !ok {
+		log.Println(err)
+
+		if ok, err := checkPortAvailability(config.Port); !ok {
+			log.Fatalf("the default port %d is also in use. Hence the program will terminate: %v", config.Port, err)
+		}
+
+		log.Println(fmt.Errorf("the requested port is already in use. Using the default port %d instead", config.Port))
+		return
 	}
+
+	config.Port = port
 }
 
 func validatePort(port int) (bool, error) {
@@ -90,20 +79,29 @@ func checkPortAvailability(port int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer l.Close()
+	defer l.Close() // TODO: How to handle this shit?
 	return true, nil
 }
 
-func validatePath(path string, def string) (string, error) {
-	if !isPathSpecified(path) {
-		return def, fmt.Errorf("no path specified")
+func handlePathInputs(paths ...path) {
+	for _, path := range paths {
+		if ok, err := checkPath(path); !ok {
+			log.Fatal(fmt.Errorf("value of flag %s is invalid: %v", path.varName, err))
+		}
+		*path.configVar = path.userInput
+	}
+}
+
+func checkPath(path path) (bool, error) {
+	if !isPathSpecified(path.userInput) {
+		return false, fmt.Errorf("no path specified")
 	}
 
-	if ok, err := existsPath(path); !ok {
-		return def, fmt.Errorf("the specified path does not exist: %v", err)
+	if ok, err := existsPath(path.userInput); !ok {
+		return false, fmt.Errorf("the specified path does not exist: %v", err)
 	}
 
-	return path, nil
+	return true, nil
 }
 
 func isPathSpecified(path string) bool {

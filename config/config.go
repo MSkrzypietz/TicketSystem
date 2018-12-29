@@ -1,9 +1,13 @@
 package config
 
+import "path"
+
 var (
-	UsersPath      = "data/users/users.xml"
-	ServerCertPath = "etc/server.crt"
-	ServerKeyPath  = "etc/server.key"
+	DataPath       = "data"
+	UsersFilePath  = path.Join(DataPath, "users", "users.xml")
+	TicketsPath    = path.Join(DataPath, "tickets")
+	ServerCertPath = path.Join("etc", "server.crt")
+	ServerKeyPath  = path.Join("etc", "server.key")
 	TemplatePath   = "templates"
-	Port           = 443
+	Port           = 4443
 )
