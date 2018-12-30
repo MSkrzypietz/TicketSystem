@@ -62,16 +62,21 @@ func TestExistsPath(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-//func TestCheckPath(t *testing.T) {
-//	actual, err := checkPath(" ", ".")
-//	assert.Equal(t, ".", actual)
-//	assert.NotNil(t, err)
-//
-//	actual, err = validatePath("test", ".")
-//	assert.Equal(t, ".", actual)
-//	assert.NotNil(t, err)
-//
-//	actual, err = validatePath("main.go", ".")
-//	assert.Equal(t, "main.go", actual)
-//	assert.Nil(t, err)
-//}
+func TestCheckPath(t *testing.T) {
+	var testVar *string
+	ok, err := checkPath(path{" ", testVar, "test"})
+	assert.False(t, ok)
+	assert.NotNil(t, err)
+
+	ok, err = checkPath(path{"test", testVar, "test"})
+	assert.False(t, ok)
+	assert.NotNil(t, err)
+
+	ok, err = checkPath(path{"main.go", testVar, "test"})
+	assert.True(t, ok)
+	assert.Nil(t, err)
+}
+
+func TestHandlePort(t *testing.T) {
+
+}

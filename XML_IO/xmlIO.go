@@ -1,6 +1,7 @@
 package XML_IO
 
 import (
+	"TicketSystem/config"
 	"encoding/xml"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
@@ -57,7 +58,7 @@ func InitDataStorage(ticketPath string, usersPath string) {
 	_, err = os.Stat(path.Join(usersPath, "users.xml"))
 	if err != nil && os.IsNotExist(err) {
 		os.MkdirAll(usersPath, 0777)
-		writeToXML(nil, path.Join(usersPath, "users.xml"))
+		writeToXML(nil, config.UsersFilePath())
 	}
 }
 
@@ -181,7 +182,7 @@ func MergeTickets(path string, definitionsPath string, firstTicketID int, second
 		return err2
 	}
 	if firstTicket.Editor != secondTicket.Editor {
-		return errors.New("The two tickets for the merging process do not have the same editors.")
+		return errors.New("the two tickets for the merging process do not have the same editors")
 	}
 	for _, msgList := range secondTicket.MessageList {
 		firstTicket.MessageList = append(firstTicket.MessageList, msgList)
@@ -216,7 +217,7 @@ func checkCache() error {
 			}
 			tmpInt++
 		}
-		return errors.New("No ticket found in the cache.")
+		return errors.New("no ticket found in the cache")
 	} else {
 		return nil
 	}
@@ -288,7 +289,7 @@ func VerifyUser(path string, name string, password string) (bool, error) {
 func LoginUser(path string, name string, password string, session string) error {
 	usersMap, err := readUsers(path)
 	if err != nil {
-		return errors.New("Wrong path to user file.")
+		return errors.New("wrong path to user file")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
 	if err != nil {
@@ -307,7 +308,7 @@ func LogoutUser(path string, name string) error {
 		return err
 	}
 	if usersmap[name].Username != name {
-		return errors.New("User does not exist.")
+		return errors.New("user does not exist")
 	}
 	tmpUser := usersmap[name]
 	tmpUser.SessionID = ""

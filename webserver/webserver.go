@@ -29,7 +29,7 @@ var templates *template.Template
 
 func StartServer() {
 	// TODO: Fix paths and take it from configs..
-	XML_IO.InitDataStorage("data/tickets", "data/users")
+	XML_IO.InitDataStorage(config.TicketsPath(), config.UsersPath())
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 	http.HandleFunc("/", ServeIndex)
@@ -151,7 +151,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		_, errUser := XML_IO.CreateUser(config.UsersFilePath, username, string(hashedPassword))
+		_, errUser := XML_IO.CreateUser(config.UsersFilePath(), username, string(hashedPassword))
 		if errUser != nil {
 			log.Println("Creating User failed, formal check of uname an passwd is valid")
 			return
@@ -175,7 +175,7 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uuid := utils.CreateUUID(64) // TODO: put this in LoginUser
-	err = XML_IO.LoginUser(config.UsersFilePath, r.PostFormValue("username"), r.PostFormValue("password"), uuid)
+	err = XML_IO.LoginUser(config.UsersFilePath(), r.PostFormValue("username"), r.PostFormValue("password"), uuid)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
