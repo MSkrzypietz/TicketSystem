@@ -1,7 +1,6 @@
 package XML_IO
 
 import (
-	"TicketSystem/config"
 	"encoding/xml"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
@@ -14,8 +13,6 @@ import (
 )
 
 //TODO: (Kleinigkeit - nicht dringend): In users.xml gibt es 2 "root" Elemente? <UserList> oder <users> kann entfernt werden
-
-//TODO: Error handling bei allen Warnungen
 
 //struct that defines a ticket with the parameters ID, mail of the client, reference, actual status, editor and a list of all messages
 type Ticket struct {
@@ -48,17 +45,34 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
-//TODO: Handling of the errors of mkdirall and writetoxml
+//TODO: config for userfilepath does not work
 //creates directory for the data storage if it doesn´t exist
-func InitDataStorage(ticketPath string, usersPath string) {
+func InitDataStorage(ticketPath string, usersPath string) error {
 	_, err := os.Stat(ticketPath)
-	if err != nil && os.IsNotExist(err) {
-		os.MkdirAll(ticketPath, 0777)
+	if err != nil {
+		if os.IsNotExist(err) {
+			tmpErr := os.MkdirAll(ticketPath, 0777)
+			if tmpErr != nil {
+				return tmpErr
+			}
+		}
+	} else {
+		return err
 	}
+
 	_, err = os.Stat(path.Join(usersPath, "users.xml"))
-	if err != nil && os.IsNotExist(err) {
-		os.MkdirAll(usersPath, 0777)
-		writeToXML(nil, config.UsersFilePath())
+	if err != nil {
+		if os.IsNotExist(err) {
+			tmpErr := os.MkdirAll(usersPath, 0777)
+			if tmpErr != nil {
+				return tmpErr
+			}
+		}
+		// _,err = os.Create(config.UserFilePath())
+		_, err = os.Create("../data/users/users.xml")
+		return err
+	} else {
+		return err
 	}
 }
 
@@ -207,7 +221,7 @@ func writeToXML(v interface{}, path string) error {
 
 //function checks if there are too many tickets in the cache and in the case of too many tickets one will be deleted. Returns an error whether it was successful.
 func checkCache() error {
-	if len(ticketMap) > 10 {
+	if len(ticketMap) > 9 {
 		randNumber := rand.Intn(len(ticketMap))
 		tmpInt := 1
 		for _, tmpTicket := range ticketMap {
