@@ -1,23 +1,22 @@
 package webserver
 
 import (
+	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"bytes"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestIndexPage(t *testing.T) {
-
-}
-
-func TestExecuteTemplate(t *testing.T) {
-	//response := ExecuteTemplate(http.ResponseWriter(), *http.Request{}, "../templates/login.html", nil)
-}
-
 func TestServeUserRegistration(t *testing.T) {
-	config.UsersPath = "../data/users/users.xml"
+	if ok, err := createUser("Test123", "123"); !ok {
+		log.Println(err)
+		return
+	}
 
 	req, err := http.NewRequest("POST", "/register", bytes.NewBuffer([]byte(`{"newUsername": "Test123", "newPassword1"": 123, "newPassword2"": 123"}`)))
 	if err != nil {
@@ -30,10 +29,24 @@ func TestServeUserRegistration(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusAccepted {
-		t.Errorf("Handler returned the wrong status code... got %v and expected %v", status, http.StatusAccepted)
+		assert.Equal(t, status, http.StatusAccepted)
 	}
 
 	// TODO: Check if user is registered / available in users.xml with xmlIO.CheckUser
 
 	// TODO: Remove User or delete users.xml file??
+}
+
+func createUser(userName string, password string) (bool, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		return false, err
+	}
+
+	_, errUser := XML_IO.CreateUser(config.UsersFilePath(), userName, string(hashedPassword))
+	if errUser != nil {
+		return false, err
+	}
+
+	return true, nil
 }

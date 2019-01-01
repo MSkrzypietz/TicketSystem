@@ -13,10 +13,6 @@ import (
 	"strconv"
 )
 
-//TODO: Global context won t work when multiple users are requesting stuff
-// Probably need to create a SessionManager struct and perhaps a router struct
-// Remove context all together, instead have different name when executing a template
-
 type context struct {
 	HeaderTitle     string
 	ContentTemplate string
@@ -24,11 +20,9 @@ type context struct {
 	ShowSignInModal bool
 }
 
-//var ctx context// = context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: false, ShowSignInModal: true}
 var templates *template.Template
 
 func StartServer() {
-	// TODO: Fix paths and take it from configs..
 	XML_IO.InitDataStorage(config.TicketsPath(), config.UsersPath())
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
@@ -149,6 +143,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 		if err != nil {
 			log.Println(err)
+			return
 		}
 
 		_, errUser := XML_IO.CreateUser(config.UsersFilePath(), username, string(hashedPassword))
