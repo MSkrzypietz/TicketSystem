@@ -1,37 +1,32 @@
-{{define "signup-modal"}}
-<div class="modal fade" id="modalRegisterForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header text-center">
-                <h4 class="modal-title w-100 font-weight-bold">Sign up</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form action="/signUp" method="post">
-                <div class="modal-body mx-3">
-                    <div class="md-form mb-5">
-                        <i class="fa fa-fw fa-user prefix grey-text"></i>
-                        <input type="text" id="orangeForm-name" class="form-control validate" name="username">
-                        <label data-error="wrong" data-success="right" for="orangeForm-name">Username</label>
-                    </div>
-                    <div class="md-form mb-5">
-                        <i class="fa fa-fw fa-lock prefix grey-text"></i>
-                        <input type="password" id="orangeForm-email" class="form-control validate" name="password1">
-                        <label data-error="wrong" data-success="right" for="orangeForm-email">Password</label>
-                    </div>
-                    <div class="md-form mb-4">
-                        <i class="fa fa-fw fa-lock prefix grey-text"></i>
-                        <input type="password" id="orangeForm-pass" class="form-control validate" name="password2">
-                        <label data-error="wrong" data-success="right" for="orangeForm-pass">Confirm Password</label>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex justify-content-center">
-                    <button type="submit" class="btn btn-deep-orange">Sign up</button>
-                </div>
-            </form>
-        </div>
+{{define "signup"}}
+<div class="modal-content">
+    <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Sign up</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
+    <form action="/signUp" method="post">
+        <div class="modal-body mx-3">
+            <div class="md-form mb-5">
+                <i class="fa fa-fw fa-user prefix grey-text"></i>
+                <input type="text" id="orangeForm-name" class="form-control validate" name="username">
+                <label data-error="wrong" data-success="right" for="orangeForm-name">Username</label>
+            </div>
+            <div class="md-form mb-5">
+                <i class="fa fa-fw fa-lock prefix grey-text"></i>
+                <input type="password" id="orangeForm-email" class="form-control validate" name="password1">
+                <label data-error="wrong" data-success="right" for="orangeForm-email">Password</label>
+            </div>
+            <div class="md-form mb-4">
+                <i class="fa fa-fw fa-lock prefix grey-text"></i>
+                <input type="password" id="orangeForm-pass" class="form-control validate" name="password2">
+                <label data-error="wrong" data-success="right" for="orangeForm-pass">Confirm Password</label>
+            </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-center">
+            <button type="submit" class="btn btn-deep-orange">Sign up</button>
+        </div>
+    </form>
 </div>
 {{end}}

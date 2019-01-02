@@ -337,15 +337,15 @@ func GetUserSession(path string, name string) string {
 }
 
 //returns an user by a specified session id
-func GetUserBySession(path string, session string) User {
+func GetUserBySession(path string, session string) (User, error) {
 	if session == "" {
-		return User{}
+		return User{}, errors.New("session is not set")
 	}
 	usersMap, _ := readUsers(path)
 	for _, tmpUser := range usersMap {
 		if tmpUser.SessionID == session {
-			return tmpUser
+			return tmpUser, nil
 		}
 	}
-	return User{}
+	return User{}, errors.New("user does not exist")
 }
