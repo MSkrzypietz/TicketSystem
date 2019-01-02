@@ -1,6 +1,4 @@
 {{define "navbar"}}
-{{template "signin-modal"}}
-{{template "signup-modal"}}
 <nav class="navbar navbar-expand-md navbar-dark bg-dark">
     <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
         <ul class="navbar-nav mr-auto">
@@ -36,10 +34,10 @@
                 </li>
             {{else}}
             <li class="nav-item">
-                <a class="nav-link" data-toggle="modal" data-target="#modalLoginForm">Sign in</a>
+                <a class="nav-link" href="/signIn">Sign in</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="modal" data-target="#modalRegisterForm">Sign up</a>
+                <a class="nav-link" href="/signUp">Sign up</a>
             </li>
             {{end}}
         </ul>

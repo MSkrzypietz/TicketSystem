@@ -17,7 +17,6 @@ type context struct {
 	HeaderTitle     string
 	ContentTemplate string
 	IsSignedIn      bool
-	ShowSignInModal bool
 }
 
 var templates *template.Template
@@ -26,11 +25,15 @@ func StartServer() {
 	XML_IO.InitDataStorage(config.TicketsPath(), config.UsersPath())
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
+	af := utils.AuthenticatorFunc(func(user, password string) bool {
+		return true
+	})
+
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/signUp", ServeUserRegistration)
 	http.HandleFunc("/signIn", ServeSignIn)
 	http.HandleFunc("/signOut", ServeSignOut)
-	http.HandleFunc("/tickets/", ServeTickets)
+	http.HandleFunc("/tickets/", utils.AuthWrapper(af, ServeTickets))
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 
@@ -43,24 +46,16 @@ func StartServer() {
 }
 
 func ServeTickets(w http.ResponseWriter, r *http.Request) {
-	//TODO: Replace (the following 5 lines) with wrapper that checks if its a valid session (to access restrained resources
-	_, err := GetUserFromCookie(r)
+	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true}
+	err := templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
-		ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: false, ShowSignInModal: true}
-		err = templates.ExecuteTemplate(w, "index.html", ctx)
-		return
-	}
-
-	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, ShowSignInModal: false}
-	err = templates.ExecuteTemplate(w, "index.html", ctx)
-	if err != nil {
-		log.Fatalf("Cannot Get View: %v", err)
+		// TODO: How to handle? Fatal should be avoided
 	}
 }
 
 func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
-	_, err := GetUserFromCookie(r)
-	ctx := context{HeaderTitle: "New Ticket", ContentTemplate: "newticket.html", IsSignedIn: err == nil, ShowSignInModal: false}
+	_, err := utils.GetUserFromCookie(r)
+	ctx := context{HeaderTitle: "New Ticket", ContentTemplate: "newticket.html", IsSignedIn: err == nil}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
@@ -68,8 +63,8 @@ func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeIndex(w http.ResponseWriter, r *http.Request) {
-	_, err := GetUserFromCookie(r)
-	ctx := context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: err == nil, ShowSignInModal: false}
+	_, err := utils.GetUserFromCookie(r)
+	ctx := context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: err == nil}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		log.Fatalf("Cannot Get View: %v", err)
@@ -129,6 +124,15 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.PostFormValue("username") == "" || r.PostFormValue("password") == "" {
+		ctx := context{HeaderTitle: "Sign up", ContentTemplate: "signup.html", IsSignedIn: false}
+		err = templates.ExecuteTemplate(w, "index.html", ctx)
+		if err != nil {
+			//TODO
+		}
+		return
+	}
+
 	if !utils.CheckEqualStrings(r.PostFormValue("password1"), r.PostFormValue("password2")) {
 		log.Println("Aborting registration... The entered passwords don't match.")
 		w.WriteHeader(http.StatusBadRequest)
@@ -169,6 +173,15 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.PostFormValue("username") == "" || r.PostFormValue("password") == "" {
+		ctx := context{HeaderTitle: "Sign in", ContentTemplate: "signin.html", IsSignedIn: false}
+		err = templates.ExecuteTemplate(w, "index.html", ctx)
+		if err != nil {
+			//TODO
+		}
+		return
+	}
+
 	uuid := utils.CreateUUID(64) // TODO: put this in LoginUser
 	err = XML_IO.LoginUser(config.UsersFilePath(), r.PostFormValue("username"), r.PostFormValue("password"), uuid)
 	if err != nil {
@@ -178,11 +191,21 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	CreateCookie(w, uuid) // TODO: put this in LoginUser
 
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusFound)
+	url, err := r.Cookie("requested-url-while-not-authenticated")
+	if err != nil || url.Value == "" {
+		http.Redirect(w, r, "/", http.StatusFound)
+	} else {
+		http.Redirect(w, r, url.Value, http.StatusFound)
+	}
 }
 
 func ServeSignOut(w http.ResponseWriter, r *http.Request) {
 	DestroySession(w)
+	http.SetCookie(w, &http.Cookie{
+		Name:   "requested-url-while-not-authenticated",
+		Value:  "",
+		MaxAge: -1,
+	})
 
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
