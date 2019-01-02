@@ -1,6 +1,7 @@
 package XML_IO
 
 import (
+	"TicketSystem/config"
 	"encoding/xml"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
@@ -45,7 +46,6 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
-//TODO: config for userfilepath does not work
 //creates directory for the data storage if it doesn´t exist
 func InitDataStorage(ticketPath string, usersPath string) error {
 	_, err := os.Stat(ticketPath)
@@ -68,8 +68,7 @@ func InitDataStorage(ticketPath string, usersPath string) error {
 				return tmpErr
 			}
 		}
-		// _,err = os.Create(config.UserFilePath())
-		_, err = os.Create("../data/users/users.xml")
+		_, err = os.Create(path.Join("../", config.UsersFilePath()))
 		return err
 	} else {
 		return err
@@ -243,7 +242,11 @@ func CreateUser(path string, name string, password string) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
-	usersMap[name] = User{Username: name, Password: password, SessionID: ""}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		return User{}, err
+	}
+	usersMap[name] = User{Username: name, Password: string(hash), SessionID: ""}
 	err = storeUsers(path, usersMap)
 	if err != nil {
 		return User{}, err
@@ -293,10 +296,11 @@ func VerifyUser(path string, name string, password string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if usersMap[name].Password == password {
+	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
+	if err == nil {
 		return true, nil
 	}
-	return false, nil
+	return false, err
 }
 
 //Login of a user to the ticket system. Returns an error if an error occurs.
@@ -306,6 +310,7 @@ func LoginUser(path string, name string, password string, session string) error 
 		return errors.New("wrong path to user file")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
+
 	if err != nil {
 		return err
 	}
@@ -337,15 +342,15 @@ func GetUserSession(path string, name string) string {
 }
 
 //returns an user by a specified session id
-func GetUserBySession(path string, session string) User {
+func GetUserBySession(path string, session string) (User, error) {
 	if session == "" {
-		return User{}
+		return User{}, errors.New("session is not set")
 	}
 	usersMap, _ := readUsers(path)
 	for _, tmpUser := range usersMap {
 		if tmpUser.SessionID == session {
-			return tmpUser
+			return tmpUser, nil
 		}
 	}
-	return User{}
+	return User{}, errors.New("user does not exist")
 }

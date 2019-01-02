@@ -1,16 +1,22 @@
 package XML_IO
 
 import (
+	"TicketSystem/config"
 	"encoding/xml"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"path"
 	"testing"
 )
 
-//TODO: TestInitDataStorage anpassen
 func TestInitDataStorage(t *testing.T) {
+	assert := assert.New(t)
 	os.RemoveAll("../data")
 	InitDataStorage("../data/tickets", "../data/users")
+	_, err := os.Stat(path.Join("../", config.UsersFilePath()))
+	assert.Nil(err)
+	_, err = os.Stat(path.Join("../", config.TicketsPath()))
+	assert.Nil(err)
 }
 
 func TestTicketCreation(t *testing.T) {
@@ -193,13 +199,12 @@ func TestCheckCache(t *testing.T) {
 	removeCompleteDataStorage()
 }
 
-//TODO: fix tests for user actions
 func TestCreateUser(t *testing.T) {
 	assert := assert.New(t)
 	_, err := CreateUser("", "", "")
 	assert.NotNil(err)
 	expectedUser, _ := CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
-	assert.Equal(expectedUser, User{Username: "mustermann", Password: "musterpasswort"})
+	assert.Equal(expectedUser.Username, "mustermann")
 	removeCompleteDataStorage()
 }
 
@@ -213,75 +218,88 @@ func TestStoreUser(t *testing.T) {
 	removeCompleteDataStorage()
 }
 
+//TODO: fix test for reading users
 func TestReadUser(t *testing.T) {
-	_, err := CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
-	assert.Nil(t, err)
+	assert := assert.New(t)
+	_, err := readUsers("falscherPfad")
+	assert.NotNil(err)
+	user1, _ := CreateUser("../data/users/users.xml", "mustermann1", "musterpasswort")
+	user2, _ := CreateUser("../data/users/users.xml", "mustermann2", "musterpasswort")
 	expectedMap := make(map[string]User)
-	expectedMap["mustermann"] = User{Username: "mustermann", Password: "musterpasswort"}
-	tmpMap, err := readUsers("../data/users/users.xml")
-	assert.Nil(t, err)
-	assert.Equal(t, expectedMap, tmpMap)
-	os.Remove("../data/users/users.xml")
-	expectedMap = make(map[string]User)
-	tmpMap, err = readUsers("../data/users/users.xml")
-	assert.NotNil(t, err)
-	assert.Equal(t, expectedMap, tmpMap)
+	expectedMap[user1.Username] = user1
+	expectedMap[user2.Username] = user2
+	actMap, _ := readUsers("../data/users/users.xml")
+	assert.Equal(expectedMap, actMap)
 	removeCompleteDataStorage()
 }
 
 func TestCheckUser(t *testing.T) {
+	assert := assert.New(t)
 	CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
 	tmpBool, err := CheckUser("../data/users/users.xml", "mustermann")
-	assert.Nil(t, err)
-	assert.False(t, tmpBool)
+	assert.Nil(err)
+	assert.False(tmpBool)
 	tmpBool, err = CheckUser("../data/users/users.xml", "muster")
-	assert.Nil(t, err)
-	assert.True(t, tmpBool)
+	assert.Nil(err)
+	assert.True(tmpBool)
+	removeCompleteDataStorage()
 }
 
 func TestVerifyUser(t *testing.T) {
+	assert := assert.New(t)
 	CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
 	tmpBool, err := VerifyUser("../data/users/users.xml", "mustermann", "musterpasswort")
-	assert.True(t, tmpBool)
-	assert.Nil(t, err)
+	assert.True(tmpBool)
+	assert.Nil(err)
 	tmpBool, err = VerifyUser("../data/users/users.xml", "mustermann", "xxx")
-	assert.False(t, tmpBool)
-	assert.Nil(t, err)
+	assert.False(tmpBool)
+	assert.NotNil(err)
+	removeCompleteDataStorage()
 }
 
 func TestLoginUser(t *testing.T) {
+	assert := assert.New(t)
 	CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
-	assert.Nil(t, LoginUser("../data/users/users.xml", "mustermann", "musterpasswort", "1234"))
-	assert.NotNil(t, LoginUser("../data/users/users.xml", "mustermann", "falschespasswort", "1234"))
+	assert.Nil(LoginUser("../data/users/users.xml", "mustermann", "musterpasswort", "1234"))
+	assert.NotNil(LoginUser("../data/users/users.xml", "mustermann", "falschespasswort", "1234"))
 	usersMap, _ := readUsers("../data/users/users.xml")
-	assert.Equal(t, "1234", usersMap["mustermann"].SessionID)
+	assert.Equal("1234", usersMap["mustermann"].SessionID)
+	removeCompleteDataStorage()
 }
 
 func TestLogoutUser(t *testing.T) {
+	assert := assert.New(t)
 	CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
-	assert.Nil(t, LoginUser("../data/users/users.xml", "mustermann", "musterpasswort", "1234"))
+	assert.Nil(LoginUser("../data/users/users.xml", "mustermann", "musterpasswort", "1234"))
 	usersmap, _ := readUsers("../data/users/users.xml")
-	assert.Equal(t, "1234", usersmap["mustermann"].SessionID)
-	assert.Nil(t, LogoutUser("../data/users/users.xml", "mustermann"))
+	assert.Equal("1234", usersmap["mustermann"].SessionID)
+	assert.Nil(LogoutUser("../data/users/users.xml", "mustermann"))
 	usersmap, _ = readUsers("../data/users/users.xml")
-	assert.Equal(t, "", usersmap["mustermann"].SessionID)
-	assert.NotNil(t, LogoutUser("../data/users/users.xml", "falscherName"))
+	assert.Equal("", usersmap["mustermann"].SessionID)
+	assert.NotNil(LogoutUser("../data/users/users.xml", "falscherName"))
+	removeCompleteDataStorage()
 }
 
 func TestGetUserSession(t *testing.T) {
+	assert := assert.New(t)
 	CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
-	assert.Equal(t, "", GetUserSession("../data/users/users.xml", "mustermann"))
+	assert.Equal("", GetUserSession("../data/users/users.xml", "mustermann"))
 	LoginUser("../data/users/users.xml", "mustermann", "musterpasswort", "1234")
-	assert.Equal(t, "1234", GetUserSession("../data/users/users.xml", "mustermann"))
+	assert.Equal("1234", GetUserSession("../data/users/users.xml", "mustermann"))
+	removeCompleteDataStorage()
 }
 
 func TestGetUserBySession(t *testing.T) {
+	assert := assert.New(t)
 	CreateUser("../data/users/users.xml", "mustermann", "musterpasswort")
 	LoginUser("../data/users/users.xml", "mustermann", "musterpasswort", "1234")
-	expectedUser := User{Username: "mustermann", Password: "musterpasswort", SessionID: "1234"}
-	assert.Equal(t, expectedUser, GetUserBySession("../data/users/users.xml", "1234"))
-	assert.Equal(t, User{}, GetUserBySession("../data/users/users.xml", ""))
-	assert.Equal(t, User{}, GetUserBySession("../data/users/users.xml", "FalscheSession"))
+	actUser, err := GetUserBySession("../data/users/users.xml", "1234")
+	assert.Equal("mustermann", actUser.Username)
+	_, err = GetUserBySession("../data/users/users.xml", "")
+	assert.NotNil(err)
+	_, err = GetUserBySession("../data/users/users.xml", "FalscheSession")
+	assert.NotNil(err)
+	removeCompleteDataStorage()
 }
 
 func removeCompleteDataStorage() {
