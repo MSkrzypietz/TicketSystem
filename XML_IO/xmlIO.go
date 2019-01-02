@@ -296,11 +296,12 @@ func VerifyUser(path string, name string, password string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
-	if err == nil {
-		return true, nil
+
+	if password != usersMap[name].Password {
+		return false, errors.New("passwords don't match. Cannot verify the user")
 	}
-	return false, err
+
+	return true, nil
 }
 
 //Login of a user to the ticket system. Returns an error if an error occurs.
@@ -309,8 +310,8 @@ func LoginUser(path string, name string, password string, session string) error 
 	if err != nil {
 		return errors.New("wrong path to user file")
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
 
+	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
 	if err != nil {
 		return err
 	}

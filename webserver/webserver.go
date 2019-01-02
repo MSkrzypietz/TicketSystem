@@ -5,7 +5,6 @@ import (
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"log"
 	"net/http"
@@ -17,6 +16,7 @@ type context struct {
 	HeaderTitle     string
 	ContentTemplate string
 	IsSignedIn      bool
+	ErrorMsg        string
 }
 
 var templates *template.Template
@@ -26,7 +26,11 @@ func StartServer() {
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 	af := utils.AuthenticatorFunc(func(user, password string) bool {
-		return true
+		ok, err := XML_IO.VerifyUser(config.UsersFilePath(), user, password)
+		if err != nil {
+			log.Println(err)
+		}
+		return ok
 	})
 
 	http.HandleFunc("/", ServeIndex)
@@ -36,6 +40,7 @@ func StartServer() {
 	http.HandleFunc("/tickets/", utils.AuthWrapper(af, ServeTickets))
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
+	http.HandleFunc("/error", ServeErrorPage)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
@@ -124,7 +129,9 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.PostFormValue("username") == "" || r.PostFormValue("password") == "" {
+	if r.PostFormValue("username") == "" ||
+		r.PostFormValue("password1") == "" ||
+		r.PostFormValue("password2") == "" {
 		ctx := context{HeaderTitle: "Sign up", ContentTemplate: "signup.html", IsSignedIn: false}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
 		if err != nil {
@@ -144,13 +151,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	//TODO: uncomment in production
 	// if utils.CheckUsernameFormal(username) && utils.CheckPasswdFormal(password) {
 	if true {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		_, errUser := XML_IO.CreateUser(config.UsersFilePath(), username, string(hashedPassword))
+		_, errUser := XML_IO.CreateUser(config.UsersFilePath(), username, string(password))
 		if errUser != nil {
 			log.Println("Creating User failed, formal check of uname an passwd is valid")
 			return
@@ -186,7 +187,7 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	err = XML_IO.LoginUser(config.UsersFilePath(), r.PostFormValue("username"), r.PostFormValue("password"), uuid)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Redirect(w, r, "/error?err=Test", http.StatusFound)
 		return
 	}
 	CreateCookie(w, uuid) // TODO: put this in LoginUser
@@ -208,4 +209,13 @@ func ServeSignOut(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+}
+
+func ServeErrorPage(w http.ResponseWriter, r *http.Request) {
+	// TODO: Fix IsSignedIn
+	ctx := context{HeaderTitle: "Error", ContentTemplate: "errorpage.html", IsSignedIn: false, ErrorMsg: r.URL.Query()["err"][0]}
+	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	if err != nil {
+
+	}
 }
