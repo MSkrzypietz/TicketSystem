@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"TicketSystem/XML_IO"
-	"TicketSystem/config"
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
@@ -43,7 +42,7 @@ func createUser(userName string, password string) (bool, error) {
 		return false, err
 	}
 
-	_, errUser := XML_IO.CreateUser(config.UsersFilePath(), userName, string(hashedPassword))
+	_, errUser := XML_IO.CreateUser(userName, string(hashedPassword))
 	if errUser != nil {
 		return false, err
 	}
