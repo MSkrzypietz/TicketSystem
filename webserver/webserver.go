@@ -325,6 +325,24 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ticket, err := XML_IO.ReadTicket(ticketId)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if ticket.Editor != user.Username {
+		// TODO: Show error for malicious activity -> only the editor can release a ticket
+		log.Println(err)
+		return
+	}
+
 	err = XML_IO.ChangeEditor(ticketId, "")
 	if err != nil {
 		log.Println(err)
