@@ -260,18 +260,15 @@ func TestCheckUser(t *testing.T) {
 	removeCompleteDataStorage()
 }
 
-//TODO: add a positiv verification
 func TestVerifyUser(t *testing.T) {
 	config.DataPath = "wrongPath"
 	assert := assert.New(t)
 	_, err := VerifyUser("", "")
 	assert.NotNil(err)
 	config.DataPath = "../data"
-
 	CreateUser("mustermann", "musterpasswort")
-	tmpPsswd, _ := bcrypt.GenerateFromPassword([]byte("musterpasswort"), bcrypt.DefaultCost)
+	tmpPsswd, _ := bcrypt.GenerateFromPassword([]byte("mmusterpasswort"), bcrypt.DefaultCost)
 	tmpBool, err := VerifyUser("mustermann", string(tmpPsswd))
-
 	tmpBool, err = VerifyUser("mustermann", "xxx")
 	assert.False(tmpBool)
 	assert.NotNil(err)
