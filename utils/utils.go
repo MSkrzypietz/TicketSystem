@@ -2,7 +2,6 @@ package utils
 
 import (
 	"TicketSystem/XML_IO"
-	"TicketSystem/config"
 	"errors"
 	"math/rand"
 	"net/http"
@@ -95,7 +94,7 @@ func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {
 		return XML_IO.User{}, errors.New("session id is not set")
 	}
 
-	return XML_IO.GetUserBySession(config.UsersFilePath(), cookie.Value)
+	return XML_IO.GetUserBySession(cookie.Value)
 }
 
 func RemoveCookie(w http.ResponseWriter, name string) {

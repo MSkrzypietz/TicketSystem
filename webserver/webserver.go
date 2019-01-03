@@ -22,11 +22,11 @@ type context struct {
 var templates *template.Template
 
 func StartServer() {
-	XML_IO.InitDataStorage(config.TicketsPath(), config.UsersPath())
+	XML_IO.InitDataStorage()
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 
 	af := utils.AuthenticatorFunc(func(user, password string) bool {
-		ok, err := XML_IO.VerifyUser(config.UsersFilePath(), user, password)
+		ok, err := XML_IO.VerifyUser(user, password)
 		if err != nil {
 			log.Println(err)
 		}
@@ -106,7 +106,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 		// Inputs okay
 
 		// TODO: Handle errors from CreateTicket
-		_, err = XML_IO.CreateTicket("data/tickets/ticket", "XML_IO/definitions.xml", email, subject, message)
+		_, err = XML_IO.CreateTicket(email, subject, message)
 
 		if err == nil {
 			http.Redirect(w, r, "/", http.StatusMovedPermanently)
@@ -151,7 +151,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	//TODO: uncomment in production
 	// if utils.CheckUsernameFormal(username) && utils.CheckPasswdFormal(password) {
 	if true {
-		_, errUser := XML_IO.CreateUser(config.UsersFilePath(), username, string(password))
+		_, errUser := XML_IO.CreateUser(username, string(password))
 		if errUser != nil {
 			log.Println("Creating User failed, formal check of uname an passwd is valid")
 			return
@@ -184,7 +184,7 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uuid := utils.CreateUUID(64) // TODO: put this in LoginUser
-	err = XML_IO.LoginUser(config.UsersFilePath(), r.PostFormValue("username"), r.PostFormValue("password"), uuid)
+	err = XML_IO.LoginUser(r.PostFormValue("username"), r.PostFormValue("password"), uuid)
 	if err != nil {
 		log.Println(err)
 		http.Redirect(w, r, "/error?err=Test", http.StatusFound)

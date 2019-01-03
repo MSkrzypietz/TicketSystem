@@ -1,6 +1,9 @@
 package config
 
-import "path"
+import (
+	"path"
+	"strconv"
+)
 
 var (
 	DataPath       = "data"
@@ -20,4 +23,12 @@ func UsersFilePath() string {
 
 func TicketsPath() string {
 	return path.Join(DataPath, "tickets")
+}
+
+func TicketXMLPath(id int) string {
+	return path.Join(TicketsPath(), "ticket"+strconv.Itoa(id)+".xml")
+}
+
+func DefinitionsFilePath() string {
+	return path.Join(DataPath, "definitions.xml")
 }

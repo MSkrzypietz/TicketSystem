@@ -27,7 +27,7 @@ func main() {
 }
 
 func handleFlags() {
-	dataPath := flag.String("data", config.DataPath, "Path to data folder")
+	//dataPath := flag.String("data", config.DataPath, "Path to data folder")
 	serverCertPath := flag.String("cert", config.ServerCertPath, "Path to server certificate")
 	serverKeyPath := flag.String("key", config.ServerKeyPath, "Path to server key")
 	templatePath := flag.String("templates", config.TemplatePath, "Path to templates folder")
@@ -36,7 +36,7 @@ func handleFlags() {
 
 	handlePort(*port)
 	handlePathInputs(
-		path{*dataPath, &config.DataPath, "data"},
+		//path{*dataPath, &config.DataPath, "data"},
 		path{*serverCertPath, &config.ServerCertPath, "cert"},
 		path{*serverKeyPath, &config.ServerKeyPath, "key"},
 		path{*templatePath, &config.TemplatePath, "templates"},
