@@ -58,7 +58,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// TODO: First get tickets by editor
-		ticketsData := XML_IO.GetTicketsByStatus(path.Join(config.TicketsPath(), "ticket"), "XML_IO/definitions.xml", 0)
+		ticketsData := XML_IO.GetTicketsByStatus(0)
 
 		user, err := utils.GetUserFromCookie(r)
 		if err != nil {
@@ -73,8 +73,9 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticket, err := XML_IO.ReadTicket(path.Join(config.TicketsPath(), "ticket"), ticketId)
+	ticket, err := XML_IO.ReadTicket(ticketId)
 	if err != nil {
+		// TODO show error page that ticket does not exist
 		log.Println(err)
 	}
 
@@ -260,7 +261,7 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticket, err := XML_IO.ReadTicket(path.Join(config.TicketsPath(), "ticket"), ticketId)
+	ticket, err := XML_IO.ReadTicket(ticketId)
 	if err != nil {
 		log.Println(err)
 		return
@@ -272,7 +273,7 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = XML_IO.AddMessage(path.Join(config.TicketsPath(), "ticket"), ticket, user.Username, r.PostFormValue("comment"))
+	_, err = XML_IO.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
 	if err != nil {
 		log.Println(err)
 	}
