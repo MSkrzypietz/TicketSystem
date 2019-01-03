@@ -45,6 +45,7 @@ func StartServer() {
 	http.HandleFunc("/error", ServeErrorPage)
 	http.HandleFunc("/addComment", ServeAddComment)
 	http.HandleFunc("/takeOverTicket", ServeTicketTakeover)
+	http.HandleFunc("/releaseTicket", ServeTicketRelease)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
@@ -89,7 +90,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "ticketdetail.html", IsSignedIn: true, TicketsData: []XML_IO.Ticket{ticket}}
+	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, TicketsData: []XML_IO.Ticket{ticket}}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		// TODO: How to handle? Fatal should be avoided
@@ -310,6 +311,26 @@ func ServeTicketTakeover(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = XML_IO.ChangeStatus(ticketId, 1)
+	if err != nil {
+		log.Println(err)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
+	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = XML_IO.ChangeEditor(ticketId, "")
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = XML_IO.ChangeStatus(ticketId, 0)
 	if err != nil {
 		log.Println(err)
 	}

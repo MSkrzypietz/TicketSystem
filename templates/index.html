@@ -11,7 +11,7 @@
         {{else if eq .ContentTemplate "tickets.html"}}
             {{template "tickets" .}}
         {{else if eq .ContentTemplate "ticketdetail.html"}}
-            {{template "ticketDetail" (index .TicketsData 0)}}
+            {{template "ticketDetail" .}}
         {{else if eq .ContentTemplate "signin.html"}}
             {{template "signin"}}
         {{else if eq .ContentTemplate "signup.html"}}
