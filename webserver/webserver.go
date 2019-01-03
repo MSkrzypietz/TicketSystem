@@ -44,6 +44,7 @@ func StartServer() {
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/error", ServeErrorPage)
 	http.HandleFunc("/addComment", ServeAddComment)
+	http.HandleFunc("/takeOverTicket", ServeTicketTakeover)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
@@ -54,11 +55,18 @@ func StartServer() {
 }
 
 func ServeTickets(w http.ResponseWriter, r *http.Request) {
-	ticketId, err := strconv.Atoi(path.Base(r.URL.Path))
-
+	ticketId, tErr := strconv.Atoi(path.Base(r.URL.Path))
+	user, err := utils.GetUserFromCookie(r)
 	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if tErr != nil {
 		// TODO: First get tickets by editor
-		ticketsData := XML_IO.GetTicketsByStatus(0)
+
+		ticketsData := XML_IO.GetTicketsByEditor(user.Username)
+		ticketsData = append(ticketsData, XML_IO.GetTicketsByStatus(0)...)
 
 		user, err := utils.GetUserFromCookie(r)
 		if err != nil {
@@ -72,6 +80,8 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	// TODO: Check if this ticket is assigned to the current user
 
 	ticket, err := XML_IO.ReadTicket(ticketId)
 	if err != nil {
@@ -274,6 +284,32 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = XML_IO.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
+	if err != nil {
+		log.Println(err)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func ServeTicketTakeover(w http.ResponseWriter, r *http.Request) {
+	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = XML_IO.ChangeEditor(ticketId, user.Username)
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = XML_IO.ChangeStatus(ticketId, 1)
 	if err != nil {
 		log.Println(err)
 	}
