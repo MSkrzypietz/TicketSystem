@@ -17,6 +17,8 @@ type context struct {
 	ContentTemplate string
 	IsSignedIn      bool
 	ErrorMsg        string
+	Username        string
+	TicketsData     []XML_IO.Ticket
 }
 
 var templates *template.Template
@@ -41,6 +43,7 @@ func StartServer() {
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/error", ServeErrorPage)
+	http.HandleFunc("/addComment", ServeAddComment)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
@@ -51,8 +54,32 @@ func StartServer() {
 }
 
 func ServeTickets(w http.ResponseWriter, r *http.Request) {
-	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true}
-	err := templates.ExecuteTemplate(w, "index.html", ctx)
+	ticketId, err := strconv.Atoi(path.Base(r.URL.Path))
+
+	if err != nil {
+		// TODO: First get tickets by editor
+		ticketsData := XML_IO.GetTicketsByStatus(path.Join(config.TicketsPath(), "ticket"), "XML_IO/definitions.xml", 0)
+
+		user, err := utils.GetUserFromCookie(r)
+		if err != nil {
+			log.Println(err)
+		}
+
+		ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, Username: user.Username, TicketsData: ticketsData}
+		err = templates.ExecuteTemplate(w, "index.html", ctx)
+		if err != nil {
+			// TODO: How to handle? Fatal should be avoided
+		}
+		return
+	}
+
+	ticket, err := XML_IO.ReadTicket(path.Join(config.TicketsPath(), "ticket"), ticketId)
+	if err != nil {
+		log.Println(err)
+	}
+
+	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "ticketdetail.html", IsSignedIn: true, TicketsData: []XML_IO.Ticket{ticket}}
+	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		// TODO: How to handle? Fatal should be avoided
 	}
@@ -218,4 +245,37 @@ func ServeErrorPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 	}
+}
+
+func ServeAddComment(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	ticket, err := XML_IO.ReadTicket(path.Join(config.TicketsPath(), "ticket"), ticketId)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	_, err = XML_IO.AddMessage(path.Join(config.TicketsPath(), "ticket"), ticket, user.Username, r.PostFormValue("comment"))
+	if err != nil {
+		log.Println(err)
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

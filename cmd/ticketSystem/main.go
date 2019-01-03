@@ -27,6 +27,7 @@ func main() {
 }
 
 func handleFlags() {
+	//TODO: Fix data path handling
 	//dataPath := flag.String("data", config.DataPath, "Path to data folder")
 	serverCertPath := flag.String("cert", config.ServerCertPath, "Path to server certificate")
 	serverKeyPath := flag.String("key", config.ServerKeyPath, "Path to server key")

@@ -9,7 +9,9 @@
         {{else if eq .ContentTemplate "newticket.html"}}
             {{template "newticket"}}
         {{else if eq .ContentTemplate "tickets.html"}}
-            {{template "tickets"}}
+            {{template "tickets" .}}
+        {{else if eq .ContentTemplate "ticketdetail.html"}}
+            {{template "ticketDetail" (index .TicketsData 0)}}
         {{else if eq .ContentTemplate "signin.html"}}
             {{template "signin"}}
         {{else if eq .ContentTemplate "signup.html"}}
@@ -27,5 +29,17 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.15/js/mdb.min.js"></script>
+
+    <!-- Own Scripts -->
+    <script type="text/javascript">
+        $(function(){
+            $(".ticketPreview").each(function(i) {
+                len = $(this).text().length;
+                if(len > 120) {
+                    $(this).text($(this).text().substr(0, 120) + '...');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

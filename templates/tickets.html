@@ -1,10 +1,19 @@
 {{define "tickets"}}
     <div>
-        <ul>
-            <li>Ticket 1</li>
-            <li>Ticket 2</li>
-            <li>Ticket 3</li>
-            <li>Ticket 4</li>
-        </ul>
+        {{range .TicketsData}}
+            <a href={{print "/tickets/" .Id}}>
+                <div class="card card-cascade wider reverse">
+                    <div class="card-body card-body-cascade text-center">
+                        {{if eq .Editor $.Username}}
+                            <span class="card-notify-badge">Assigned to you!</span>
+                        {{end}}
+                        <h4 class="card-title text-dark"><strong>{{.Reference}}</strong></h4>
+                        <h6 class="font-weight-bold indigo-text py-1">{{.Client}}</h6>
+                        <p class="ticketPreview card-text">{{(index .MessageList 0).Text}}</p>
+                    </div>
+                </div>
+            </a>
+            <br>
+        {{end}}
     </div>
 {{end}}
