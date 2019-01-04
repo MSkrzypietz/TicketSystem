@@ -259,6 +259,9 @@ func CreateUser(name string, password string) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
+	if _, ok := usersMap[name]; ok {
+		return User{}, errors.New("a user with the same name already exists")
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return User{}, err
