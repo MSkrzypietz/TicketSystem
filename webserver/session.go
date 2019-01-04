@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func CreateCookie(w http.ResponseWriter, id string) {
+func CreateSessionCookie(w http.ResponseWriter, id string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",
 		Value:    id,
