@@ -112,7 +112,6 @@ func InitDataStorage() error {
 			if err != nil {
 				return err
 			}
-			//TODO: add struct for mail xml
 			return writeToXML(Maillist{}, config.MailFilePath())
 		}
 	}
