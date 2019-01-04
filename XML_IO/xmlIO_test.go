@@ -226,7 +226,7 @@ func TestStoreUser(t *testing.T) {
 	tmpUserMap := make(map[string]User)
 	tmpUserMap["mustermann"] = User{Username: "mustermann", Password: "musterpasswort"}
 	storeUsers(tmpUserMap)
-	actMap, _ := readUsers()
+	actMap, _ := ReadUsers()
 	assert.Equal(tmpUserMap, actMap)
 	removeCompleteDataStorage()
 }
@@ -234,13 +234,13 @@ func TestStoreUser(t *testing.T) {
 func TestReadUser(t *testing.T) {
 	config.DataPath = "wrongPath"
 	assert := assert.New(t)
-	_, err := readUsers()
+	_, err := ReadUsers()
 	assert.NotNil(err)
 
 	config.DataPath = "../data"
 	CreateUser("testOne", "test")
 	CreateUser("testTwo", "test")
-	actMap, err := readUsers()
+	actMap, err := ReadUsers()
 	assert.Nil(err)
 	assert.Equal("testOne", actMap["testOne"].Username)
 	assert.Equal("testTwo", actMap["testTwo"].Username)
@@ -281,7 +281,7 @@ func TestLoginUser(t *testing.T) {
 	CreateUser("mustermann", "musterpasswort")
 	assert.Nil(LoginUser("mustermann", "musterpasswort", "1234"))
 	assert.NotNil(LoginUser("mustermann", "falschespasswort", "1234"))
-	usersMap, _ := readUsers()
+	usersMap, _ := ReadUsers()
 	assert.Equal("1234", usersMap["mustermann"].SessionID)
 	removeCompleteDataStorage()
 }
@@ -291,10 +291,10 @@ func TestLogoutUser(t *testing.T) {
 	assert := assert.New(t)
 	CreateUser("mustermann", "musterpasswort")
 	assert.Nil(LoginUser("mustermann", "musterpasswort", "1234"))
-	usersmap, _ := readUsers()
+	usersmap, _ := ReadUsers()
 	assert.Equal("1234", usersmap["mustermann"].SessionID)
 	assert.Nil(LogoutUser("mustermann"))
-	usersmap, _ = readUsers()
+	usersmap, _ = ReadUsers()
 	assert.Equal("", usersmap["mustermann"].SessionID)
 	assert.NotNil(LogoutUser("falscherName"))
 	removeCompleteDataStorage()

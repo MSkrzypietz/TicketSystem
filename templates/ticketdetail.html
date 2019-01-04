@@ -2,10 +2,26 @@
     {{$ticket := (index .TicketsData 0)}}
     <div class="card card-cascade wider reverse">
         <div class="card-body card-body-cascade">
-            <h4 class="card-title text-dark">
-                <strong>{{$ticket.Reference}}</strong>
+            <h4 class="card-title text-dark d-flex flex-row mb-0">
+                <strong class="align-self-center">{{$ticket.Reference}}&nbsp;&nbsp;&nbsp;</strong>
                 {{if eq $ticket.Status 0}}
-                    <a href="/takeOverTicket" class="btn btn-primary p-1 m-0">Take over ticket</a>
+                    <form action="/assignTicket" method="post">
+                        <div class="d-flex flex-row">
+                            <div class="form-group mb-0">
+                                <select class="form-control px-1 py-0" name="editor">
+                                    {{range $index, $element := .Users}}
+                                        {{if le $index 0}}
+                                            <option value="{{.}}">Me</option>
+                                        {{else}}
+                                            <option value="{{.}}">{{.}}</option>
+                                        {{end}}
+                                    {{end}}
+                                </select>
+                            </div>
+                            &nbsp;&nbsp;&nbsp;
+                            <button type="submit" class="btn btn-primary btn-rounded z-depth-1a text-nowrap m-0 px-2 py-0">Assign ticket</button>
+                        </div>
+                    </form>
                 {{else if eq $ticket.Editor .Username}}
                     <a href="/releaseTicket" class="btn btn-primary p-1 m-0">Release ticket</a>
                 {{end}}

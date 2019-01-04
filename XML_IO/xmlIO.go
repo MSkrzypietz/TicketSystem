@@ -255,7 +255,7 @@ func checkCache() error {
 
 //creates a new user and returns the user and an error whether the creation was successful.
 func CreateUser(name string, password string) (User, error) {
-	usersMap, err := readUsers()
+	usersMap, err := ReadUsers()
 	if err != nil {
 		return User{}, err
 	}
@@ -272,7 +272,7 @@ func CreateUser(name string, password string) (User, error) {
 }
 
 //reads all users from the xml-file and returns the users and an error whether the reading process was successful.
-func readUsers() (map[string]User, error) {
+func ReadUsers() (map[string]User, error) {
 	usersMap := make(map[string]User)
 	file, err := ioutil.ReadFile(config.UsersFilePath())
 	if err != nil {
@@ -297,7 +297,7 @@ func storeUsers(usermap map[string]User) error {
 
 //checks if the user is registrated and returns a bool. The bool value is false if there is already a user with that name.
 func CheckUser(name string) (bool, error) {
-	usersMap, err := readUsers()
+	usersMap, err := ReadUsers()
 	if err != nil {
 		return false, err
 	}
@@ -309,7 +309,7 @@ func CheckUser(name string) (bool, error) {
 
 //checks if the username and the password is correct. Returns a bool whether it is correct.
 func VerifyUser(name string, password string) (bool, error) {
-	usersMap, err := readUsers()
+	usersMap, err := ReadUsers()
 	if err != nil {
 		return false, err
 	}
@@ -323,7 +323,7 @@ func VerifyUser(name string, password string) (bool, error) {
 
 //Login of a user to the ticket system. Returns an error if an error occurs.
 func LoginUser(name string, password string, session string) error {
-	usersMap, err := readUsers()
+	usersMap, err := ReadUsers()
 	if err != nil {
 		return errors.New("wrong path to user file")
 	}
@@ -340,7 +340,7 @@ func LoginUser(name string, password string, session string) error {
 
 //Logout of a user and deletes the session id. Returns an error if an error occurs.
 func LogoutUser(name string) error {
-	usersmap, err := readUsers()
+	usersmap, err := ReadUsers()
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ func LogoutUser(name string) error {
 
 //gets the actual session id of an user
 func GetUserSession(name string) string {
-	usersMap, _ := readUsers()
+	usersMap, _ := ReadUsers()
 	return usersMap[name].SessionID
 }
 
@@ -364,7 +364,7 @@ func GetUserBySession(session string) (User, error) {
 	if session == "" {
 		return User{}, errors.New("session is not set")
 	}
-	usersMap, _ := readUsers()
+	usersMap, _ := ReadUsers()
 	for _, tmpUser := range usersMap {
 		if tmpUser.SessionID == session {
 			return tmpUser, nil

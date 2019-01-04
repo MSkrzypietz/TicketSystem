@@ -18,6 +18,7 @@ type context struct {
 	IsSignedIn      bool
 	ErrorMsg        string
 	Username        string
+	Users           []string
 	TicketsData     []XML_IO.Ticket
 }
 
@@ -44,7 +45,7 @@ func StartServer() {
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/error", ServeErrorPage)
 	http.HandleFunc("/addComment", ServeAddComment)
-	http.HandleFunc("/takeOverTicket", ServeTicketTakeover)
+	http.HandleFunc("/assignTicket", ServeTicketAssignment)
 	http.HandleFunc("/releaseTicket", ServeTicketRelease)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
@@ -63,6 +64,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Show ticket overview
 	if tErr != nil {
 		// TODO: First get tickets by editor
 
@@ -90,7 +92,18 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, TicketsData: []XML_IO.Ticket{ticket}}
+	usersMap, err := XML_IO.ReadUsers()
+	if err != nil {
+		log.Println(err)
+	}
+	delete(usersMap, user.Username)
+
+	usersList := []string{user.Username}
+	for _, v := range usersMap {
+		usersList = append(usersList, v.Username)
+	}
+
+	ctx := context{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: []XML_IO.Ticket{ticket}}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		// TODO: How to handle? Fatal should be avoided
@@ -292,20 +305,21 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func ServeTicketTakeover(w http.ResponseWriter, r *http.Request) {
+func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	user, err := utils.GetUserFromCookie(r)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	err = XML_IO.ChangeEditor(ticketId, user.Username)
+	// TODO: Check if r.PostFormValue("comment") is a valid editor else show error page
+	err = XML_IO.ChangeEditor(ticketId, r.PostFormValue("editor"))
 	if err != nil {
 		log.Println(err)
 	}
@@ -315,7 +329,17 @@ func ServeTicketTakeover(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if r.PostFormValue("editor") == user.Username {
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+	} else {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
 }
 
 func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
