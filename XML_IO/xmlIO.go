@@ -50,6 +50,19 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
+//struct for mails
+type Mail struct {
+	Mail    string `xml:"Mail"`
+	Caption string `xml:"Caption"`
+	Message string `xml:"Message"`
+	MailId  int    `xml:"MailId"`
+}
+
+type Maillist struct {
+	MailIdCounter int    `xml:"MailIdCounter"`
+	Maillist      []Mail `xml:"mails>mail"`
+}
+
 //creates directory for the data storage if it doesn´t exist
 func InitDataStorage() error {
 	_, err := os.Stat(config.TicketsPath())
@@ -85,7 +98,22 @@ func InitDataStorage() error {
 			if err != nil {
 				return err
 			}
-			return writeToXML(0, config.DefinitionsFilePath())
+			err = writeToXML(0, config.DefinitionsFilePath())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err = os.Stat(config.MailFilePath())
+	if err != nil {
+		if os.IsNotExist(err) {
+			_, err = os.Create(config.MailFilePath())
+			if err != nil {
+				return err
+			}
+			//TODO: add struct for mail xml
+			return writeToXML(Maillist{}, config.MailFilePath())
 		}
 	}
 	return err
@@ -371,4 +399,29 @@ func GetUserBySession(session string) (User, error) {
 		}
 	}
 	return User{}, errors.New("user does not exist")
+}
+
+func SendMail(mail string, caption string, message string) error {
+	maillist, err := GetAllMailsToSend()
+	if err != nil {
+		return err
+	}
+	nextMailId := maillist.MailIdCounter + 1
+	newMail := Mail{Mail: mail, Caption: caption, Message: message, MailId: nextMailId}
+	maillist.Maillist = append(maillist.Maillist, newMail)
+	maillist.MailIdCounter = nextMailId
+	return writeToXML(maillist, config.MailFilePath())
+}
+
+func GetAllMailsToSend() (Maillist, error) {
+	file, err := ioutil.ReadFile(config.MailFilePath())
+	if err != nil {
+		return Maillist{}, err
+	}
+	var maillist Maillist
+	err = xml.Unmarshal(file, &maillist)
+	if err != nil {
+		return Maillist{}, err
+	}
+	return maillist, nil
 }

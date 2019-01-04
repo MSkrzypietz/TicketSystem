@@ -32,3 +32,7 @@ func TicketXMLPath(id int) string {
 func DefinitionsFilePath() string {
 	return path.Join(DataPath, "definitions.xml")
 }
+
+func MailFilePath() string {
+	return path.Join(DataPath, "mails.xml")
+}

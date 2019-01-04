@@ -18,6 +18,8 @@ func TestInitDataStorage(t *testing.T) {
 	assert.Nil(err)
 	_, err = os.Stat(config.TicketsPath())
 	assert.Nil(err)
+	_, err = os.Stat(config.MailFilePath())
+	assert.Nil(err)
 }
 
 func TestTicketCreation(t *testing.T) {
@@ -71,7 +73,7 @@ func TestTicketReading(t *testing.T) {
 	_, err := ReadTicket(1)
 	assert.NotNil(err)
 	expectedTicket, _ := CreateTicket("1234", "PC problem", "Pc does not start anymore")
-	actTicket, _ = ReadTicket(1)
+	actTicket, _ = ReadTicket(expectedTicket.Id)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
 	assert.Equal(expectedTicket, actTicket)
@@ -321,6 +323,38 @@ func TestGetUserBySession(t *testing.T) {
 	assert.NotNil(err)
 	_, err = GetUserBySession("FalscheSession")
 	assert.NotNil(err)
+	removeCompleteDataStorage()
+}
+
+func TestSendMail(t *testing.T) {
+	assert := assert.New(t)
+	config.DataPath = "wrongPath"
+	assert.NotNil(SendMail("", "", ""))
+	config.DataPath = "../data"
+	assert.Nil(SendMail("test@test", "testCaption", "testMsg"))
+	var expectedMaillist []Mail
+	expectedMaillist = append(expectedMaillist, Mail{"test@test", "testCaption", "testMsg", 1})
+	actMaillist, err := GetAllMailsToSend()
+	assert.Nil(err)
+	assert.Equal(Maillist{1, expectedMaillist}, actMaillist)
+	removeCompleteDataStorage()
+}
+
+func TestGetAllMailsToSend(t *testing.T) {
+	assert := assert.New(t)
+	config.DataPath = "wrongPath"
+	_, err := GetAllMailsToSend()
+	assert.NotNil(err)
+	config.DataPath = "../data"
+
+	var mails []Mail
+	mails = append(mails, Mail{"test@test", "testOne", "testOne", 1})
+	mails = append(mails, Mail{"test@test", "testTwo", "testTwo", 2})
+	expectedMaillist := Maillist{1, mails}
+	writeToXML(expectedMaillist, config.MailFilePath())
+	actMaillist, err := GetAllMailsToSend()
+	assert.Nil(err)
+	assert.Equal(expectedMaillist, actMaillist)
 	removeCompleteDataStorage()
 }
 
