@@ -2,7 +2,7 @@ package XML_IO
 
 import (
 	"TicketSystem/config"
-	"testify-master/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
