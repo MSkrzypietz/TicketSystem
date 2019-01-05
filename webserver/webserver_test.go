@@ -476,7 +476,41 @@ func TestServeAddCommentInvalidURL(t *testing.T) {
 	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
 }
 
-func TestServeAddCommentInvalidTicketID(t *testing.T) {
+func TestServeAddCommentSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("comment", "My comment")
+
+	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/1337")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeAddComment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeAddCommentSuccessComment(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -485,6 +519,45 @@ func TestServeAddCommentInvalidTicketID(t *testing.T) {
 
 	form := url.Values{}
 	form.Add("comment", "My comment")
+	form.Add("sendoption", "comments")
+
+	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeAddComment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusMovedPermanently)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, req.Referer(), resultURL.Path)
+}
+
+func TestServeAddCommentSuccessEmail(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("comment", "My comment")
+	form.Add("sendoption", "customer")
 
 	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")

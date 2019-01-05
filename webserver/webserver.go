@@ -285,9 +285,16 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = XML_IO.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
-	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+	if r.PostFormValue("sendoption") == "comments" {
+		_, err = XML_IO.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
+		if err != nil {
+			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		}
+	} else {
+		err = XML_IO.SendMail(ticket.Client, "Reply to your ticket (ID: "+strconv.Itoa(ticket.Id)+")", r.PostFormValue("comment"))
+		if err != nil {
+			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		}
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusMovedPermanently)
