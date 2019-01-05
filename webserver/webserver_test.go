@@ -943,3 +943,32 @@ func TestServeTicketsInvalidTicketID(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageUrl(), resultURL.Path)
 }
+
+func TestServeTicketsSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	createUser("Test124563", "Aa!123456")
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/ticket/"+strconv.Itoa(testTicket.Id), nil)
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+	handler := http.HandlerFunc(ServeTickets)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+}

@@ -49,9 +49,9 @@ func StartServer() {
 	http.HandleFunc("/tickets/new", ServeNewTicket)
 	http.HandleFunc("/createTicket", ServeTicketCreation)
 	http.HandleFunc("/error/", ServeErrorPage)
-	http.HandleFunc("/addComment", ServeAddComment)
-	http.HandleFunc("/assignTicket", ServeTicketAssignment)
-	http.HandleFunc("/releaseTicket", ServeTicketRelease)
+	http.HandleFunc("/addComment", utils.AuthWrapper(af, ServeAddComment))
+	http.HandleFunc("/assignTicket", utils.AuthWrapper(af, ServeTicketAssignment))
+	http.HandleFunc("/releaseTicket", utils.AuthWrapper(af, ServeTicketRelease))
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
@@ -86,13 +86,13 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Creating a user list without the signed in user to show the selection for ticket assignment
 	usersMap, err := XML_IO.ReadUsers()
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 	delete(usersMap, user.Username)
-
 	usersList := []string{user.Username}
 	for _, v := range usersMap {
 		usersList = append(usersList, v.Username)
