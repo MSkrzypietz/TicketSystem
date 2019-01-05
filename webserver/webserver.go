@@ -69,9 +69,8 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 
 	ticketId, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil { // Show ticket overview
-		// First listing all the tickets the current user is assigned to and afterwards showing not assigned tickets
-		ticketsData := XML_IO.GetTicketsByEditor(user.Username)
-		ticketsData = append(ticketsData, XML_IO.GetTicketsByStatus(0)...)
+		ticketsData := XML_IO.GetTicketsByStatus(XML_IO.UnProcessed)
+		ticketsData = append(ticketsData, XML_IO.GetTicketsByStatus(XML_IO.InProcess)...)
 
 		ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, Username: user.Username, TicketsData: ticketsData}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
@@ -84,12 +83,6 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 	ticket, err := XML_IO.ReadTicket(ticketId)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageUrl(), http.StatusFound)
-		return
-	}
-
-	// Checking if this ticket is assigned to the current user
-	if ticket.Status != XML_IO.UnProcessed && ticket.Editor != user.Username {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
@@ -183,7 +176,9 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password1")
 
-	if !utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password) {
+	// @Neemann: In Produktion würden wird das auskommentieren, aber zum testen wäre es sonst zu nervig..
+	//if !utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password) {
+	if false {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
 		return
 	}

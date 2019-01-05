@@ -35,8 +35,7 @@ func AuthWrapper(authenticator Authenticator, handler http.HandlerFunc) http.Han
 		if authenticator.Authenticate(user.Username, user.Password) {
 			handler(w, r)
 		} else {
-			http.Redirect(w, r, "/error?err=Test", http.StatusFound)
-			//webserver.ServeErrorPage(w, "Test err")
+			http.Redirect(w, r, ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
 		}
 	}
 }
