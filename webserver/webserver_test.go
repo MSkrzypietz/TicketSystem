@@ -1,16 +1,74 @@
 package webserver
 
 import (
-	"TicketSystem/XML_IO"
-	"bytes"
+	"TicketSystem/config"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"testing"
 )
 
+func setup() {
+	config.DataPath = path.Join("..", "datatest")
+	config.TemplatePath = path.Join("..", "templates")
+	Setup()
+}
+
+func TestServeNewTicket(t *testing.T) {
+	setup()
+	defer os.RemoveAll(config.DataPath)
+
+	req, err := http.NewRequest("POST", "/tickets/new", nil)
+	assert.Nil(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeNewTicket)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestServeIndex(t *testing.T) {
+	setup()
+	defer os.RemoveAll(config.DataPath)
+
+	req, err := http.NewRequest("POST", "/", nil)
+	assert.Nil(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeIndex)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestServeSignOut(t *testing.T) {
+	setup()
+	defer os.RemoveAll(config.DataPath)
+
+	req, err := http.NewRequest("POST", "/signOut", nil)
+	assert.Nil(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeSignOut)
+
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/", resultURL.Path)
+
+	for _, cookie := range rr.Result().Cookies() {
+		if cookie.Name == "session-id" || cookie.Name == "requested-url-while-not-authenticated" {
+			assert.Equal(t, -1, cookie.MaxAge)
+		}
+	}
+}
+
+/*
 func TestServeUserRegistration(t *testing.T) {
 	if ok, err := createUser("Test123", "123"); !ok {
 		log.Println(err)
@@ -35,17 +93,4 @@ func TestServeUserRegistration(t *testing.T) {
 
 	// TODO: Remove User or delete users.xml file??
 }
-
-func createUser(userName string, password string) (bool, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-	if err != nil {
-		return false, err
-	}
-
-	_, errUser := XML_IO.CreateUser(userName, string(hashedPassword))
-	if errUser != nil {
-		return false, err
-	}
-
-	return true, nil
-}
+*/

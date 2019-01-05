@@ -23,13 +23,16 @@ type context struct {
 
 var templates *template.Template
 
-func StartServer() {
+func Setup() {
 	err := XML_IO.InitDataStorage()
 	if err != nil {
 		log.Fatal("Cannot start the ticket system due to problems initializing the data storage...")
 	}
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
+}
 
+func StartServer() {
+	Setup()
 	af := utils.AuthenticatorFunc(func(user, password string) bool {
 		ok, err := XML_IO.VerifyUser(user, password)
 		if err != nil {
@@ -51,7 +54,7 @@ func StartServer() {
 	http.HandleFunc("/releaseTicket", ServeTicketRelease)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
-	err = http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
+	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
 	if err != nil {
 		panic(err)
 	}
