@@ -2,11 +2,15 @@ package webserver
 
 import (
 	"TicketSystem/config"
+	"TicketSystem/utils"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -16,13 +20,18 @@ func setup() {
 	Setup()
 }
 
+func teardown() {
+	err := os.RemoveAll(config.DataPath)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func TestServeNewTicket(t *testing.T) {
 	setup()
-	defer os.RemoveAll(config.DataPath)
+	defer teardown()
 
-	req, err := http.NewRequest("POST", "/tickets/new", nil)
-	assert.Nil(t, err)
-
+	req := httptest.NewRequest(http.MethodPost, "/tickets/new", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(ServeNewTicket)
 
@@ -32,11 +41,9 @@ func TestServeNewTicket(t *testing.T) {
 
 func TestServeIndex(t *testing.T) {
 	setup()
-	defer os.RemoveAll(config.DataPath)
+	defer teardown()
 
-	req, err := http.NewRequest("POST", "/", nil)
-	assert.Nil(t, err)
-
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(ServeIndex)
 
@@ -44,13 +51,50 @@ func TestServeIndex(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
 
+func TestServeErrorPage(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/error/1", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeErrorPage)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "/error/1", req.URL.Path)
+
+	req = httptest.NewRequest(http.MethodPost, "/error/1000", nil)
+	rr = httptest.NewRecorder()
+	handler = http.HandlerFunc(ServeErrorPage)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/error/0", resultURL.Path)
+
+	req = httptest.NewRequest(http.MethodPost, "/error", nil)
+	rr = httptest.NewRecorder()
+	handler = http.HandlerFunc(ServeErrorPage)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
+	resultURL, err = rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/error/0", resultURL.Path)
+
+	req = httptest.NewRequest(http.MethodPost, "/error/1test", nil)
+	rr = httptest.NewRecorder()
+	handler = http.HandlerFunc(ServeErrorPage)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
+	resultURL, err = rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/error/0", resultURL.Path)
+}
+
 func TestServeSignOut(t *testing.T) {
 	setup()
-	defer os.RemoveAll(config.DataPath)
+	defer teardown()
 
-	req, err := http.NewRequest("POST", "/signOut", nil)
-	assert.Nil(t, err)
-
+	req := httptest.NewRequest(http.MethodPost, "/signOut", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(ServeSignOut)
 
@@ -68,29 +112,113 @@ func TestServeSignOut(t *testing.T) {
 	}
 }
 
-/*
-func TestServeUserRegistration(t *testing.T) {
-	if ok, err := createUser("Test123", "123"); !ok {
-		log.Println(err)
-		return
-	}
+func TestServeUserRegistrationShowTemplate(t *testing.T) {
+	setup()
+	defer teardown()
 
-	req, err := http.NewRequest("POST", "/register", bytes.NewBuffer([]byte(`{"newUsername": "Test123", "newPassword1"": 123, "newPassword2"": 123"}`)))
-	if err != nil {
-		t.Fatal(err)
-	}
+	form := url.Values{}
+	form.Add("username", "Test123")
+	form.Add("password1", "")
+	form.Add("password2", "123")
+
+	req := httptest.NewRequest(http.MethodPost, "/signUp", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(ServeUserRegistration)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, rr.Code, http.StatusOK)
+}
 
+func TestServeUserRegistrationPasswordsDontMatch(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("username", "Test123")
+	form.Add("password1", "123456")
+	form.Add("password2", "12345")
+
+	req := httptest.NewRequest(http.MethodPost, "/signUp", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeUserRegistration)
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusAccepted {
-		assert.Equal(t, status, http.StatusAccepted)
-	}
-
-	// TODO: Check if user is registered / available in users.xml with xmlIO.CheckUser
-
-	// TODO: Remove User or delete users.xml file??
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
 }
-*/
+
+func TestServeUserRegistrationInvalidUsername(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("username", "Tes")
+	form.Add("password1", "12345")
+	form.Add("password2", "12345")
+
+	req := httptest.NewRequest(http.MethodPost, "/signUp", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeUserRegistration)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeUserRegistrationInvalidPassword(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("username", "Test123")
+	form.Add("password1", "123")
+	form.Add("password2", "123")
+
+	req := httptest.NewRequest(http.MethodPost, "/signUp", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeUserRegistration)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeUserRegistrationSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("username", "Test123")
+	form.Add("password1", "Aa!123456")
+	form.Add("password2", "Aa!123456")
+
+	req := httptest.NewRequest(http.MethodPost, "/signUp", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeUserRegistration)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusMovedPermanently)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/", resultURL.Path)
+}

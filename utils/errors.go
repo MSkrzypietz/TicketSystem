@@ -5,7 +5,8 @@ import "strconv"
 type Error int
 
 const (
-	ErrorUnauthorized Error = iota + 1
+	ErrorUnknown Error = iota
+	ErrorUnauthorized
 	ErrorTemplateExecution
 	ErrorInvalidTicketID
 	ErrorDataFetching
@@ -18,8 +19,12 @@ const (
 	ErrorDataStoring
 )
 
+const ErrorCount = 12
+
 func (err Error) String() string {
 	switch err {
+	case ErrorUnknown:
+		return "We ran into an unknown error!"
 	case ErrorUnauthorized:
 		return "You are not authorized for your actions!"
 	case ErrorTemplateExecution:
@@ -43,7 +48,7 @@ func (err Error) String() string {
 	case ErrorDataStoring:
 		return "We had issues storing your changes. Please try it again!"
 	}
-	return "Unkown Error"
+	return ErrorUnknown.String()
 }
 
 func (err Error) ErrorPageUrl() string {

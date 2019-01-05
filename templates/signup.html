@@ -10,19 +10,22 @@
         <div class="modal-body mx-3">
             <div class="md-form mb-5">
                 <i class="fa fa-fw fa-user prefix grey-text"></i>
-                <input type="text" id="orangeForm-name" class="form-control validate" name="username">
-                <label data-error="wrong" data-success="right" for="orangeForm-name">Username</label>
+                <input type="text" id="orangeForm-name" class="form-control" name="username">
+                <label for="orangeForm-name">Username</label>
             </div>
             <div class="md-form mb-5">
                 <i class="fa fa-fw fa-lock prefix grey-text"></i>
-                <input type="password" id="orangeForm-email" class="form-control validate" name="password1">
-                <label data-error="wrong" data-success="right" for="orangeForm-email">Password</label>
+                <input type="password" id="orangeForm-email" class="form-control" name="password1">
+                <label for="orangeForm-email">Password</label>
             </div>
             <div class="md-form mb-4">
                 <i class="fa fa-fw fa-lock prefix grey-text"></i>
-                <input type="password" id="orangeForm-pass" class="form-control validate" name="password2">
-                <label data-error="wrong" data-success="right" for="orangeForm-pass">Confirm Password</label>
+                <input type="password" id="orangeForm-pass" class="form-control" name="password2">
+                <label for="orangeForm-pass">Confirm Password</label>
             </div>
+            <small>Requirements Username: It has to contains only chars and numbers without spaces. It needs a total of at least five chars!</small>
+            <br>
+            <small>Requirements Password: At least one number, one letter, one uppercase letter, one symbol (!#+-*.,:;/()§$%&?) and no spaces. . It needs a total of at least five chars!</small>
         </div>
         <div class="modal-footer d-flex justify-content-center">
             <button type="submit" class="btn btn-deep-orange">Sign up</button>
