@@ -24,8 +24,16 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 	tickets := GetTicketsByClient(mail)
 	for _, actTicket := range tickets {
 		if actTicket.Reference == reference {
-			ChangeStatus(actTicket.Id, InProcess)
-			return AddMessage(actTicket, mail, message)
+			newTicket, err := AddMessage(actTicket, mail, message)
+			if err != nil {
+				return newTicket, err
+			}
+			if newTicket.Status == Closed {
+				err = ChangeStatus(newTicket.Id, InProcess)
+				newTicket.Status = InProcess
+				return newTicket, err
+			}
+			return newTicket, nil
 		}
 
 		//TODO: schauen ob Ticket bereits vorhanden ist

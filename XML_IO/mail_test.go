@@ -30,7 +30,17 @@ func TestCreateTicketFromMail(t *testing.T) {
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
 	actTicket.MessageList[1].CreationDate = expectedTicket.MessageList[1].CreationDate
 	assert.Equal(expectedTicket, actTicket)
+	removeCompleteDataStorage()
 
+	tmpTicket, _ = CreateTicket("test@mail", "testCaption", "testMsgOne")
+	expectedTicket, err = CreateTicketFromMail("test@mail", "testCaption", "testMsgTwo")
+	assert.Nil(err)
+	actTicket, err = ReadTicket(expectedTicket.Id)
+	expectedTicket.XMLName.Local = ""
+	actTicket.XMLName.Local = ""
+	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
+	actTicket.MessageList[1].CreationDate = expectedTicket.MessageList[1].CreationDate
+	assert.Equal(expectedTicket, actTicket)
 	removeCompleteDataStorage()
 }
 
