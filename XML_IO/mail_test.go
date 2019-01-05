@@ -66,7 +66,7 @@ func TestSendMail(t *testing.T) {
 	config.DataPath = "wrongPath"
 	assert.NotNil(t, SendMail("", "", ""))
 
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 	assert.Nil(t, SendMail("test@test", "testCaption", "testMsg"))
 
 	var expectedMaillist []Mail
@@ -83,7 +83,7 @@ func TestReadMailsFile(t *testing.T) {
 	config.DataPath = "wrongPath"
 	_, err := readMailsFile()
 	assert.NotNil(t, err)
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 
 	var mails []Mail
 	mails = append(mails, Mail{"test@test", "testOne", "testOne", 1})

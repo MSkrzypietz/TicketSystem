@@ -11,7 +11,7 @@ import (
 )
 
 func setup() {
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 	err := InitDataStorage()
 	if err != nil {
 		log.Println(err)
@@ -29,7 +29,7 @@ func teardown() {
 func TestInitDataStorage(t *testing.T) {
 	defer teardown()
 
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 	assert.Nil(t, os.RemoveAll(config.DataPath))
 	assert.Nil(t, InitDataStorage())
 	_, err := os.Stat(config.UsersFilePath())
@@ -292,7 +292,7 @@ func TestCreateUser(t *testing.T) {
 	_, err := CreateUser("", "")
 	assert.NotNil(t, err)
 
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 	expectedUser, _ := CreateUser("mustermann", "musterpasswort")
 	assert.Equal(t, expectedUser.Username, "mustermann")
 }
@@ -317,7 +317,7 @@ func TestReadUser(t *testing.T) {
 	_, err := ReadUsers()
 	assert.NotNil(t, err)
 
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 	_, err = CreateUser("testOne", "test")
 	assert.Nil(t, err)
 	_, err = CreateUser("testTwo", "test")
@@ -350,7 +350,7 @@ func TestVerifyUser(t *testing.T) {
 	_, err := VerifyUser("", "")
 	assert.NotNil(t, err)
 
-	config.DataPath = "../datatest"
+	config.DataPath = "datatest"
 	_, err = CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
 	tmpPsswd, _ := bcrypt.GenerateFromPassword([]byte("mmusterpasswort"), bcrypt.DefaultCost)

@@ -17,7 +17,7 @@ import (
 )
 
 func setup() {
-	config.DataPath = path.Join("..", "datatest")
+	config.DataPath = "datatest"
 	config.TemplatePath = path.Join("..", "templates")
 	Setup()
 }
