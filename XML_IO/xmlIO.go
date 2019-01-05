@@ -85,7 +85,8 @@ func InitDataStorage() error {
 				return tmpErr
 			}
 		}
-		_, err = os.Create(config.UsersFilePath())
+		f, err := os.Create(config.UsersFilePath())
+		f.Close()
 		if err != nil {
 			return err
 		}
@@ -94,11 +95,12 @@ func InitDataStorage() error {
 	_, err = os.Stat(config.DefinitionsFilePath())
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err = os.Create(config.DefinitionsFilePath())
+			f, err := os.Create(config.DefinitionsFilePath())
+			f.Close()
 			if err != nil {
 				return err
 			}
-			err = writeToXML(0, config.DefinitionsFilePath())
+			err = WriteToXML(0, config.DefinitionsFilePath())
 			if err != nil {
 				return err
 			}
@@ -108,11 +110,12 @@ func InitDataStorage() error {
 	_, err = os.Stat(config.MailFilePath())
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err = os.Create(config.MailFilePath())
+			f, err := os.Create(config.MailFilePath())
+			f.Close()
 			if err != nil {
 				return err
 			}
-			return writeToXML(Maillist{}, config.MailFilePath())
+			return WriteToXML(Maillist{}, config.MailFilePath())
 		}
 	}
 	return err
@@ -122,7 +125,7 @@ func InitDataStorage() error {
 func CreateTicket(client string, reference string, text string) (Ticket, error) {
 	IDCounter := getTicketIDCounter() + 1
 	newTicket := Ticket{Id: IDCounter, Client: client, Reference: reference, Status: UnProcessed}
-	err := writeToXML(IDCounter, config.DefinitionsFilePath())
+	err := WriteToXML(IDCounter, config.DefinitionsFilePath())
 	if err != nil {
 		return Ticket{}, err
 	}
@@ -139,7 +142,7 @@ func AddMessage(ticket Ticket, actor string, text string) (Ticket, error) {
 //stores a ticket as xml file
 func StoreTicket(ticket Ticket) error {
 	delete(ticketMap, ticket.Id)
-	return writeToXML(ticket, config.TicketXMLPath(ticket.Id))
+	return WriteToXML(ticket, config.TicketXMLPath(ticket.Id))
 }
 
 //returns a ticket from the cache or from the corresponding xml file.
@@ -163,7 +166,7 @@ func ReadTicket(id int) (Ticket, error) {
 func DeleteTicket(id int) error {
 	delete(ticketMap, id)
 	if id == getTicketIDCounter() {
-		writeToXML(id-1, config.DefinitionsFilePath())
+		WriteToXML(id-1, config.DefinitionsFilePath())
 	}
 	err := os.Remove(config.TicketXMLPath(id))
 	if err != nil {
@@ -249,7 +252,7 @@ func MergeTickets(firstTicketID int, secondTicketID int) error {
 }
 
 //functions writes an object to an specified xml file and returns an error whether the writing was successful.
-func writeToXML(v interface{}, path string) error {
+func WriteToXML(v interface{}, path string) error {
 	xmlstring, err := xml.MarshalIndent(v, "", "    ")
 	if err != nil {
 		return err
@@ -322,7 +325,7 @@ func storeUsers(usermap map[string]User) error {
 	for _, tmpUser := range usermap {
 		users = append(users, tmpUser)
 	}
-	return writeToXML(Userlist{User: users}, config.UsersFilePath())
+	return WriteToXML(Userlist{User: users}, config.UsersFilePath())
 }
 
 //checks if the user is registrated and returns a bool. The bool value is false if there is already a user with that name.
@@ -403,6 +406,7 @@ func GetUserBySession(session string) (User, error) {
 	return User{}, errors.New("user does not exist")
 }
 
+//store the message as a mail in the specific xml file
 func SendMail(mail string, caption string, message string) error {
 	maillist, err := GetAllMailsToSend()
 	if err != nil {
@@ -412,9 +416,10 @@ func SendMail(mail string, caption string, message string) error {
 	newMail := Mail{Mail: mail, Caption: caption, Message: message, MailId: nextMailId}
 	maillist.Maillist = append(maillist.Maillist, newMail)
 	maillist.MailIdCounter = nextMailId
-	return writeToXML(maillist, config.MailFilePath())
+	return WriteToXML(maillist, config.MailFilePath())
 }
 
+//get all mails from the xml file
 func GetAllMailsToSend() (Maillist, error) {
 	file, err := ioutil.ReadFile(config.MailFilePath())
 	if err != nil {
