@@ -286,7 +286,7 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 
 	ticket, err := XML_IO.ReadTicket(ticketId)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
@@ -295,7 +295,7 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 	}
 
-	http.Redirect(w, r, r.Referer(), http.StatusFound)
+	http.Redirect(w, r, r.Referer(), http.StatusMovedPermanently)
 }
 
 func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
@@ -369,7 +369,7 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Checking if the user is malicious
+	// Checking if the user is malicious and tries to release the ticket of someone else
 	if ticket.Editor != user.Username {
 		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
 		return

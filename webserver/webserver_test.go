@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -333,20 +335,15 @@ func TestServeSignInSuccessWithRequestedURLRedirect(t *testing.T) {
 	assert.Equal(t, requestedURL, resultURL.Path)
 }
 
-/*
-func TestServeTicketCreationInvalidInput(t *testing.T) {
+func TestServeTicketCreationInvalidInputs(t *testing.T) {
 	setup()
 	defer teardown()
-
-	createUser("Test123", "Aa!123456")
-	requestedURL := "/ticket/new"
 
 	form := url.Values{}
 	form.Add("email", "mustermann@gmail.com")
 	form.Add("subject", "PC Issue")
-	form.Add("message", "I have issues with my pc...")
 
-	req := httptest.NewRequest(http.MethodPost, "/signIn", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/tickets/new", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
 	req.Form = form
 
@@ -357,5 +354,524 @@ func TestServeTicketCreationInvalidInput(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, requestedURL, resultURL.Path)
-}*/
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketCreationSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("email", "mustermann@gmail.com")
+	form.Add("subject", "PC Issue")
+	form.Add("message", "I have issues with my pc...")
+
+	req := httptest.NewRequest(http.MethodPost, "/tickets/new", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeTicketCreation)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusMovedPermanently)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/", resultURL.Path)
+}
+
+func TestServeAddCommentUnauthorized(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("comment", "Test Comment")
+
+	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeAddComment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeAddCommentInvalidInput(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("comment", "")
+
+	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeAddComment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+}
+
+func loginUser(rr *httptest.ResponseRecorder, username, password, uuid string) error {
+	err := XML_IO.LoginUser(username, password, uuid)
+	CreateSessionCookie(rr, uuid)
+	return err
+}
+
+func TestServeAddCommentInvalidURL(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("comment", "My comment")
+
+	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/MyTicket")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeAddComment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeAddCommentInvalidTicketID(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("comment", "My comment")
+
+	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeAddComment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusMovedPermanently)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, req.Referer(), resultURL.Path)
+}
+
+func createDummyTicket() (XML_IO.Ticket, error) {
+	return XML_IO.CreateTicket("test@gmail.com", "Subject Dummy", "Message dummy")
+}
+
+func TestServeTicketAssignmentUnauthorized(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketAssignmentInvalidURL(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("editor", "Test123")
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/MyTicket")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketAssignmentInvalidEditor(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("editor", "Test")
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketAssignmentInvalidTicketID(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+	form.Add("editor", "Test123")
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/1337")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorDataStoring.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketAssignmentSuccessWithoutRedirect(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("editor", "Test123")
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, req.Referer(), resultURL.Path)
+}
+
+func TestServeTicketAssignmentSuccessWithRedirect(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("editor", "Test123456")
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	createUser("Test123456", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/tickets/", resultURL.Path)
+}
+
+func TestServeTicketReleaseUnauthorized(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+
+	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Form = form
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeTicketRelease)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketReleaseInvalidURL(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+
+	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/MyTicket")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketRelease)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketReleaseInvalidTicketID(t *testing.T) {
+	setup()
+	defer teardown()
+
+	form := url.Values{}
+
+	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/1337")
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketRelease)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorDataFetching.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketReleaseInvalidUser(t *testing.T) {
+	setup()
+	defer teardown()
+
+	createUser("Test1234567", "Aa!123456")
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, XML_IO.ChangeEditor(testTicket.Id, "Test1234567"))
+	assert.Nil(t, err)
+
+	form := url.Values{}
+
+	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketRelease)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketReleaseSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, XML_IO.ChangeEditor(testTicket.Id, "Test123"))
+	assert.Nil(t, err)
+
+	form := url.Values{}
+
+	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketRelease)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, req.Referer(), resultURL.Path)
+}
