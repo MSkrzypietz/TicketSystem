@@ -10,7 +10,7 @@ import (
 )
 
 func TestInitDataStorage(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	os.RemoveAll(config.DataPath)
 	InitDataStorage()
@@ -23,7 +23,8 @@ func TestInitDataStorage(t *testing.T) {
 }
 
 func TestTicketCreation(t *testing.T) {
-	config.DataPath = "../data"
+	removeCompleteDataStorage()
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	expectedTicket, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(err)
@@ -35,7 +36,7 @@ func TestTicketCreation(t *testing.T) {
 }
 
 func TestAddMessage(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	tmpTicket, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(err)
@@ -49,7 +50,7 @@ func TestAddMessage(t *testing.T) {
 }
 
 func TestTicketStoring(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	actTicket, err := CreateTicket("1234", "PC problem", "Pc does not start anymore")
 	assert.Nil(err)
@@ -63,7 +64,7 @@ func TestTicketStoring(t *testing.T) {
 }
 
 func TestTicketReading(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	tmpTicket := Ticket{Id: 1}
 	ticketMap[1] = tmpTicket
@@ -81,7 +82,7 @@ func TestTicketReading(t *testing.T) {
 }
 
 func TestIDCounter(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Equal(t, 2, getTicketIDCounter())
@@ -89,7 +90,7 @@ func TestIDCounter(t *testing.T) {
 }
 
 func TestTicketsByStatus(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	ChangeStatus(getTicketIDCounter(), 1)
@@ -108,7 +109,7 @@ func TestTicketsByStatus(t *testing.T) {
 }
 
 func TestTicketByEditor(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	ChangeEditor(getTicketIDCounter()-1, "423")
@@ -126,8 +127,26 @@ func TestTicketByEditor(t *testing.T) {
 	removeCompleteDataStorage()
 }
 
+func TestTicketByClient(t *testing.T) {
+	config.DataPath = "../datatest"
+	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	CreateTicket("clientTwo@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+
+	tickets := GetTicketsByClient("client@dhbw.de")
+	for _, element := range tickets {
+		assert.Equal(t, "client@dhbw.de", element.Client)
+	}
+	tickets = GetTicketsByClient("clientTwo@dhbw.de")
+	for _, element := range tickets {
+		assert.Equal(t, "clientTwo@dhbw.de", element.Client)
+	}
+
+	removeCompleteDataStorage()
+}
+
 func TestChangeEditor(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	ChangeEditor(getTicketIDCounter(), "4321")
 	ticket, _ := ReadTicket(getTicketIDCounter())
@@ -136,7 +155,7 @@ func TestChangeEditor(t *testing.T) {
 }
 
 func TestChangeStatus(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	ChangeStatus(getTicketIDCounter(), 2)
 	ticket, _ := ReadTicket(getTicketIDCounter())
@@ -145,7 +164,7 @@ func TestChangeStatus(t *testing.T) {
 }
 
 func TestDeleting(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	CreateTicket("client@dhbw.de", "Computer", "PC not working")
 	DeleteTicket(1)
@@ -160,7 +179,7 @@ func TestDeleting(t *testing.T) {
 }
 
 func TestMerging(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
 	CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Erika Musterfrau. Thank you.")
 	firstTicket, _ := ReadTicket(getTicketIDCounter() - 1)
@@ -195,7 +214,7 @@ func TestMerging(t *testing.T) {
 }
 
 func TestCheckCache(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	for tmpInt := 1; tmpInt <= 11; tmpInt++ {
 		CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
@@ -216,14 +235,14 @@ func TestCreateUser(t *testing.T) {
 	assert := assert.New(t)
 	_, err := CreateUser("", "")
 	assert.NotNil(err)
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	expectedUser, _ := CreateUser("mustermann", "musterpasswort")
 	assert.Equal(expectedUser.Username, "mustermann")
 	removeCompleteDataStorage()
 }
 
 func TestStoreUser(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	tmpUserMap := make(map[string]User)
 	tmpUserMap["mustermann"] = User{Username: "mustermann", Password: "musterpasswort"}
@@ -239,7 +258,7 @@ func TestReadUser(t *testing.T) {
 	_, err := ReadUsers()
 	assert.NotNil(err)
 
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateUser("testOne", "test")
 	CreateUser("testTwo", "test")
 	actMap, err := ReadUsers()
@@ -250,7 +269,7 @@ func TestReadUser(t *testing.T) {
 }
 
 func TestCheckUser(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	CreateUser("mustermann", "musterpasswort")
 	tmpBool, err := CheckUser("mustermann")
@@ -267,7 +286,7 @@ func TestVerifyUser(t *testing.T) {
 	assert := assert.New(t)
 	_, err := VerifyUser("", "")
 	assert.NotNil(err)
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	CreateUser("mustermann", "musterpasswort")
 	tmpPsswd, _ := bcrypt.GenerateFromPassword([]byte("mmusterpasswort"), bcrypt.DefaultCost)
 	tmpBool, err := VerifyUser("mustermann", string(tmpPsswd))
@@ -278,7 +297,7 @@ func TestVerifyUser(t *testing.T) {
 }
 
 func TestLoginUser(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	CreateUser("mustermann", "musterpasswort")
 	assert.Nil(LoginUser("mustermann", "musterpasswort", "1234"))
@@ -289,7 +308,7 @@ func TestLoginUser(t *testing.T) {
 }
 
 func TestLogoutUser(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	CreateUser("mustermann", "musterpasswort")
 	assert.Nil(LoginUser("mustermann", "musterpasswort", "1234"))
@@ -303,7 +322,7 @@ func TestLogoutUser(t *testing.T) {
 }
 
 func TestGetUserSession(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	CreateUser("mustermann", "musterpasswort")
 	assert.Equal("", GetUserSession("mustermann"))
@@ -313,7 +332,7 @@ func TestGetUserSession(t *testing.T) {
 }
 
 func TestGetUserBySession(t *testing.T) {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	assert := assert.New(t)
 	CreateUser("mustermann", "musterpasswort")
 	LoginUser("mustermann", "musterpasswort", "1234")
@@ -326,42 +345,10 @@ func TestGetUserBySession(t *testing.T) {
 	removeCompleteDataStorage()
 }
 
-func TestSendMail(t *testing.T) {
-	assert := assert.New(t)
-	config.DataPath = "wrongPath"
-	assert.NotNil(SendMail("", "", ""))
-	config.DataPath = "../data"
-	assert.Nil(SendMail("test@test", "testCaption", "testMsg"))
-	var expectedMaillist []Mail
-	expectedMaillist = append(expectedMaillist, Mail{"test@test", "testCaption", "testMsg", 1})
-	actMaillist, err := GetAllMailsToSend()
-	assert.Nil(err)
-	assert.Equal(Maillist{1, expectedMaillist}, actMaillist)
-	removeCompleteDataStorage()
-}
-
-func TestGetAllMailsToSend(t *testing.T) {
-	assert := assert.New(t)
-	config.DataPath = "wrongPath"
-	_, err := GetAllMailsToSend()
-	assert.NotNil(err)
-	config.DataPath = "../data"
-
-	var mails []Mail
-	mails = append(mails, Mail{"test@test", "testOne", "testOne", 1})
-	mails = append(mails, Mail{"test@test", "testTwo", "testTwo", 2})
-	expectedMaillist := Maillist{1, mails}
-	writeToXML(expectedMaillist, config.MailFilePath())
-	actMaillist, err := GetAllMailsToSend()
-	assert.Nil(err)
-	assert.Equal(expectedMaillist, actMaillist)
-	removeCompleteDataStorage()
-}
-
 func removeCompleteDataStorage() {
-	config.DataPath = "../data"
+	config.DataPath = "../datatest"
 	os.RemoveAll(config.DataPath)
 	InitDataStorage()
 	ticketMap = make(map[int]Ticket)
-	writeToXML(0, config.DefinitionsFilePath())
+	WriteToXML(0, config.DefinitionsFilePath())
 }

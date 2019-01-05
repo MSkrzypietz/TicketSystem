@@ -50,19 +50,6 @@ type Userlist struct {
 	User []User `xml:"users>user"`
 }
 
-//struct for mails
-type Mail struct {
-	Mail    string `xml:"Mail"`
-	Caption string `xml:"Caption"`
-	Message string `xml:"Message"`
-	MailId  int    `xml:"MailId"`
-}
-
-type Maillist struct {
-	MailIdCounter int    `xml:"MailIdCounter"`
-	Maillist      []Mail `xml:"mails>mail"`
-}
-
 //creates directory for the data storage if it doesn´t exist
 func InitDataStorage() error {
 	_, err := os.Stat(config.TicketsPath())
@@ -213,6 +200,18 @@ func GetTicketsByEditor(editor string) []Ticket {
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
 		tmp, _ := ReadTicket(actualID)
 		if tmp.Editor == editor && tmp.Id != 0 {
+			tickets = append(tickets, tmp)
+		}
+	}
+	return tickets
+}
+
+//returns a list of tickets owned by a client who is specified in the parameters of the function
+func GetTicketsByClient(client string) []Ticket {
+	var tickets []Ticket
+	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
+		tmp, _ := ReadTicket(actualID)
+		if tmp.Client == client && tmp.Id != 0 {
 			tickets = append(tickets, tmp)
 		}
 	}
@@ -404,31 +403,4 @@ func GetUserBySession(session string) (User, error) {
 		}
 	}
 	return User{}, errors.New("user does not exist")
-}
-
-//store the message as a mail in the specific xml file
-func SendMail(mail string, caption string, message string) error {
-	maillist, err := GetAllMailsToSend()
-	if err != nil {
-		return err
-	}
-	nextMailId := maillist.MailIdCounter + 1
-	newMail := Mail{Mail: mail, Caption: caption, Message: message, MailId: nextMailId}
-	maillist.Maillist = append(maillist.Maillist, newMail)
-	maillist.MailIdCounter = nextMailId
-	return WriteToXML(maillist, config.MailFilePath())
-}
-
-//get all mails from the xml file
-func GetAllMailsToSend() (Maillist, error) {
-	file, err := ioutil.ReadFile(config.MailFilePath())
-	if err != nil {
-		return Maillist{}, err
-	}
-	var maillist Maillist
-	err = xml.Unmarshal(file, &maillist)
-	if err != nil {
-		return Maillist{}, err
-	}
-	return maillist, nil
 }
