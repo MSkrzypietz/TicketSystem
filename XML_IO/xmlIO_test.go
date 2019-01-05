@@ -5,95 +5,122 @@ import (
 	"encoding/xml"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"os"
 	"testing"
 )
 
-func TestInitDataStorage(t *testing.T) {
+func setup() {
 	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	os.RemoveAll(config.DataPath)
-	InitDataStorage()
+	err := InitDataStorage()
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func teardown() {
+	err := os.RemoveAll(config.DataPath)
+	if err != nil {
+		log.Println(err)
+	}
+	ticketMap = make(map[int]Ticket)
+}
+
+func TestInitDataStorage(t *testing.T) {
+	defer teardown()
+
+	config.DataPath = "../datatest"
+	assert.Nil(t, os.RemoveAll(config.DataPath))
+	assert.Nil(t, InitDataStorage())
 	_, err := os.Stat(config.UsersFilePath())
-	assert.Nil(err)
+	assert.Nil(t, err)
 	_, err = os.Stat(config.TicketsPath())
-	assert.Nil(err)
+	assert.Nil(t, err)
 	_, err = os.Stat(config.MailFilePath())
-	assert.Nil(err)
+	assert.Nil(t, err)
 }
 
 func TestTicketCreation(t *testing.T) {
-	removeCompleteDataStorage()
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
+	setup()
+	defer teardown()
+
 	expectedTicket, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	assert.Nil(err)
+	assert.Nil(t, err)
 	actTicket, _ := ReadTicket(1)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
-	assert.Equal(expectedTicket, actTicket)
-	removeCompleteDataStorage()
+	assert.Equal(t, expectedTicket, actTicket)
 }
 
 func TestAddMessage(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
+	setup()
+	defer teardown()
+
 	tmpTicket, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	assert.Nil(err)
+	assert.Nil(t, err)
 	expectedTicket, _ := AddMessage(tmpTicket, "4262", "please restart")
 	actTicket, err := ReadTicket(expectedTicket.Id)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
 	actTicket.MessageList[1].CreationDate = expectedTicket.MessageList[1].CreationDate
-	assert.Equal(expectedTicket, actTicket)
-	removeCompleteDataStorage()
+	assert.Equal(t, expectedTicket, actTicket)
 }
 
 func TestTicketStoring(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
+	setup()
+	defer teardown()
+
 	actTicket, err := CreateTicket("1234", "PC problem", "Pc does not start anymore")
-	assert.Nil(err)
+	assert.Nil(t, err)
 	ticketMap[1] = actTicket
-	DeleteTicket(1)
-	assert.Equal(Ticket{}, ticketMap[1])
+	assert.Nil(t, DeleteTicket(1))
+	assert.Equal(t, Ticket{}, ticketMap[1])
 	expectedTicket, err := ReadTicket(1)
-	assert.NotNil(err)
-	assert.Equal(Ticket{}, expectedTicket)
-	removeCompleteDataStorage()
+	assert.NotNil(t, err)
+	assert.Equal(t, Ticket{}, expectedTicket)
 }
 
 func TestTicketReading(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
+	setup()
+	defer teardown()
+
 	tmpTicket := Ticket{Id: 1}
 	ticketMap[1] = tmpTicket
 	actTicket, _ := ReadTicket(1)
-	assert.Equal(tmpTicket, actTicket)
-	removeCompleteDataStorage()
+	assert.Equal(t, tmpTicket, actTicket)
+	teardown()
+	setup()
+
 	_, err := ReadTicket(1)
-	assert.NotNil(err)
+	assert.NotNil(t, err)
 	expectedTicket, _ := CreateTicket("1234", "PC problem", "Pc does not start anymore")
 	actTicket, _ = ReadTicket(expectedTicket.Id)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
-	assert.Equal(expectedTicket, actTicket)
-	removeCompleteDataStorage()
+	assert.Equal(t, expectedTicket, actTicket)
 }
 
 func TestIDCounter(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	_, err = CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
 	assert.Equal(t, 2, getTicketIDCounter())
-	removeCompleteDataStorage()
 }
 
 func TestTicketsByStatus(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	ChangeStatus(getTicketIDCounter(), 1)
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	_, err = CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	err = ChangeStatus(getTicketIDCounter(), 1)
+	assert.Nil(t, err)
 
 	tickets := GetTicketsByStatus(0)
 	for _, element := range tickets {
@@ -104,16 +131,20 @@ func TestTicketsByStatus(t *testing.T) {
 	for _, element := range tickets {
 		assert.Equal(t, 1, element.Status)
 	}
-
-	removeCompleteDataStorage()
 }
 
 func TestTicketByEditor(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	ChangeEditor(getTicketIDCounter()-1, "423")
-	ChangeEditor(getTicketIDCounter(), "22")
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	_, err = CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	err = ChangeEditor(getTicketIDCounter()-1, "423")
+	assert.Nil(t, err)
+	err = ChangeEditor(getTicketIDCounter(), "22")
+	assert.Nil(t, err)
 
 	tickets := GetTicketsByEditor("423")
 	for _, element := range tickets {
@@ -123,15 +154,18 @@ func TestTicketByEditor(t *testing.T) {
 	for _, element := range tickets {
 		assert.Equal(t, "22", element.Editor)
 	}
-
-	removeCompleteDataStorage()
 }
 
 func TestTicketByClient(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	CreateTicket("clientTwo@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	_, err = CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	_, err = CreateTicket("clientTwo@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
 
 	tickets := GetTicketsByClient("client@dhbw.de")
 	for _, element := range tickets {
@@ -141,53 +175,69 @@ func TestTicketByClient(t *testing.T) {
 	for _, element := range tickets {
 		assert.Equal(t, "clientTwo@dhbw.de", element.Client)
 	}
-
-	removeCompleteDataStorage()
 }
 
 func TestChangeEditor(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	ChangeEditor(getTicketIDCounter(), "4321")
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	err = ChangeEditor(getTicketIDCounter(), "4321")
+	assert.Nil(t, err)
 	ticket, _ := ReadTicket(getTicketIDCounter())
 	assert.Equal(t, "4321", ticket.Editor)
-	removeCompleteDataStorage()
 }
 
 func TestChangeStatus(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
-	ChangeStatus(getTicketIDCounter(), 2)
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+	assert.Nil(t, err)
+	err = ChangeStatus(getTicketIDCounter(), 2)
+	assert.Nil(t, err)
 	ticket, _ := ReadTicket(getTicketIDCounter())
 	assert.Equal(t, 2, ticket.Status)
-	removeCompleteDataStorage()
 }
 
 func TestDeleting(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	CreateTicket("client@dhbw.de", "Computer", "PC not working")
-	DeleteTicket(1)
-	assert.Equal(0, getTicketIDCounter())
-	err := DeleteTicket(11)
-	assert.NotNil(err)
-	CreateTicket("client@dhbw.de", "Computer", "PC not working")
-	DeleteTicket(1)
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "Computer", "PC not working")
+	assert.Nil(t, err)
+	err = DeleteTicket(1)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, getTicketIDCounter())
+	err = DeleteTicket(11)
+	assert.NotNil(t, err)
+	_, err = CreateTicket("client@dhbw.de", "Computer", "PC not working")
+	assert.Nil(t, err)
+	err = DeleteTicket(1)
+	assert.Nil(t, err)
 	_, err = ReadTicket(1)
-	assert.NotNil(err)
-	removeCompleteDataStorage()
+	assert.NotNil(t, err)
 }
 
 func TestMerging(t *testing.T) {
-	config.DataPath = "../datatest"
-	CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
-	CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Erika Musterfrau. Thank you.")
+	setup()
+	defer teardown()
+
+	_, err := CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
+	assert.Nil(t, err)
+	_, err = CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Erika Musterfrau. Thank you.")
+	assert.Nil(t, err)
 	firstTicket, _ := ReadTicket(getTicketIDCounter() - 1)
 	secondTicket, _ := ReadTicket(getTicketIDCounter())
-	ChangeStatus(firstTicket.Id, 1)
-	ChangeStatus(secondTicket.Id, 1)
-	ChangeEditor(firstTicket.Id, "202")
-	ChangeEditor(secondTicket.Id, "202")
+	err = ChangeStatus(firstTicket.Id, 1)
+	assert.Nil(t, err)
+	err = ChangeStatus(secondTicket.Id, 1)
+	assert.Nil(t, err)
+	err = ChangeEditor(firstTicket.Id, "202")
+	assert.Nil(t, err)
+	err = ChangeEditor(secondTicket.Id, "202")
+	assert.Nil(t, err)
 	firstTicket, _ = ReadTicket(getTicketIDCounter() - 1)
 	secondTicket, _ = ReadTicket(getTicketIDCounter())
 
@@ -197,7 +247,7 @@ func TestMerging(t *testing.T) {
 	for e := range secondTicket.MessageList {
 		msgList = append(msgList, secondTicket.MessageList[e])
 	}
-	expectedTicket := Ticket{XMLName: xml.Name{"", ""}, Id: firstTicket.Id, Client: firstTicket.Client, Reference: firstTicket.Reference, Status: firstTicket.Status, Editor: firstTicket.Editor, MessageList: msgList}
+	expectedTicket := Ticket{XMLName: xml.Name{Space: "", Local: ""}, Id: firstTicket.Id, Client: firstTicket.Client, Reference: firstTicket.Reference, Status: firstTicket.Status, Editor: firstTicket.Editor, MessageList: msgList}
 
 	assert.Nil(t, MergeTickets(firstTicket.Id, secondTicket.Id))
 	actTicket, _ := ReadTicket(firstTicket.Id)
@@ -205,150 +255,162 @@ func TestMerging(t *testing.T) {
 	assert.Equal(t, expectedTicket, actTicket)
 
 	//merge tickets with two different editors
-	CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Erika Musterfrau. Thank you.")
+	_, err = CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Erika Musterfrau. Thank you.")
+	assert.Nil(t, err)
 	secondTicketID := getTicketIDCounter()
-	ChangeEditor(secondTicketID, "412")
+	err = ChangeEditor(secondTicketID, "412")
+	assert.Nil(t, err)
 	assert.NotNil(t, MergeTickets(firstTicket.Id, secondTicketID))
-
-	removeCompleteDataStorage()
 }
 
 func TestCheckCache(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
+	setup()
+	defer teardown()
+
 	for tmpInt := 1; tmpInt <= 11; tmpInt++ {
-		CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+		_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
+		assert.Nil(t, err)
 	}
 	for tmpInt := 1; tmpInt <= 9; tmpInt++ {
-		ReadTicket(tmpInt)
+		_, err := ReadTicket(tmpInt)
+		assert.Nil(t, err)
 	}
-	assert.Equal(9, len(ticketMap))
-	ReadTicket(10)
-	assert.Equal(10, len(ticketMap))
-	ReadTicket(11)
-	assert.Equal(10, len(ticketMap))
-	removeCompleteDataStorage()
+	assert.Equal(t, 9, len(ticketMap))
+	_, err := ReadTicket(10)
+	assert.Nil(t, err)
+	assert.Equal(t, 10, len(ticketMap))
+	_, err = ReadTicket(11)
+	assert.Nil(t, err)
+	assert.Equal(t, 10, len(ticketMap))
 }
 
 func TestCreateUser(t *testing.T) {
+	setup()
+	defer teardown()
+
 	config.DataPath = "wrongPath"
-	assert := assert.New(t)
 	_, err := CreateUser("", "")
-	assert.NotNil(err)
+	assert.NotNil(t, err)
+
 	config.DataPath = "../datatest"
 	expectedUser, _ := CreateUser("mustermann", "musterpasswort")
-	assert.Equal(expectedUser.Username, "mustermann")
-	removeCompleteDataStorage()
+	assert.Equal(t, expectedUser.Username, "mustermann")
 }
 
 func TestStoreUser(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
+	setup()
+	defer teardown()
+
 	tmpUserMap := make(map[string]User)
 	tmpUserMap["mustermann"] = User{Username: "mustermann", Password: "musterpasswort"}
-	storeUsers(tmpUserMap)
+	err := storeUsers(tmpUserMap)
+	assert.Nil(t, err)
 	actMap, _ := ReadUsers()
-	assert.Equal(tmpUserMap, actMap)
-	removeCompleteDataStorage()
+	assert.Equal(t, tmpUserMap, actMap)
 }
 
 func TestReadUser(t *testing.T) {
+	setup()
+	defer teardown()
+
 	config.DataPath = "wrongPath"
-	assert := assert.New(t)
 	_, err := ReadUsers()
-	assert.NotNil(err)
+	assert.NotNil(t, err)
 
 	config.DataPath = "../datatest"
-	CreateUser("testOne", "test")
-	CreateUser("testTwo", "test")
+	_, err = CreateUser("testOne", "test")
+	assert.Nil(t, err)
+	_, err = CreateUser("testTwo", "test")
+	assert.Nil(t, err)
 	actMap, err := ReadUsers()
-	assert.Nil(err)
-	assert.Equal("testOne", actMap["testOne"].Username)
-	assert.Equal("testTwo", actMap["testTwo"].Username)
-	removeCompleteDataStorage()
+	assert.Nil(t, err)
+	assert.Equal(t, "testOne", actMap["testOne"].Username)
+	assert.Equal(t, "testTwo", actMap["testTwo"].Username)
 }
 
 func TestCheckUser(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	CreateUser("mustermann", "musterpasswort")
+	setup()
+	defer teardown()
+
+	_, err := CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
 	tmpBool, err := CheckUser("mustermann")
-	assert.Nil(err)
-	assert.False(tmpBool)
+	assert.Nil(t, err)
+	assert.False(t, tmpBool)
 	tmpBool, err = CheckUser("muster")
-	assert.Nil(err)
-	assert.True(tmpBool)
-	removeCompleteDataStorage()
+	assert.Nil(t, err)
+	assert.True(t, tmpBool)
 }
 
 func TestVerifyUser(t *testing.T) {
+	setup()
+	defer teardown()
+
 	config.DataPath = "wrongPath"
-	assert := assert.New(t)
 	_, err := VerifyUser("", "")
-	assert.NotNil(err)
+	assert.NotNil(t, err)
+
 	config.DataPath = "../datatest"
-	CreateUser("mustermann", "musterpasswort")
+	_, err = CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
 	tmpPsswd, _ := bcrypt.GenerateFromPassword([]byte("mmusterpasswort"), bcrypt.DefaultCost)
 	tmpBool, err := VerifyUser("mustermann", string(tmpPsswd))
 	tmpBool, err = VerifyUser("mustermann", "xxx")
-	assert.False(tmpBool)
-	assert.NotNil(err)
-	removeCompleteDataStorage()
+	assert.False(t, tmpBool)
+	assert.NotNil(t, err)
 }
 
 func TestLoginUser(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	CreateUser("mustermann", "musterpasswort")
-	assert.Nil(LoginUser("mustermann", "musterpasswort", "1234"))
-	assert.NotNil(LoginUser("mustermann", "falschespasswort", "1234"))
+	setup()
+	defer teardown()
+
+	_, err := CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
+	assert.Nil(t, LoginUser("mustermann", "musterpasswort", "1234"))
+	assert.NotNil(t, LoginUser("mustermann", "falschespasswort", "1234"))
 	usersMap, _ := ReadUsers()
-	assert.Equal("1234", usersMap["mustermann"].SessionID)
-	removeCompleteDataStorage()
+	assert.Equal(t, "1234", usersMap["mustermann"].SessionID)
 }
 
 func TestLogoutUser(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	CreateUser("mustermann", "musterpasswort")
-	assert.Nil(LoginUser("mustermann", "musterpasswort", "1234"))
+	setup()
+	defer teardown()
+
+	_, err := CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
+	assert.Nil(t, LoginUser("mustermann", "musterpasswort", "1234"))
 	usersmap, _ := ReadUsers()
-	assert.Equal("1234", usersmap["mustermann"].SessionID)
-	assert.Nil(LogoutUser("mustermann"))
+	assert.Equal(t, "1234", usersmap["mustermann"].SessionID)
+	assert.Nil(t, LogoutUser("mustermann"))
 	usersmap, _ = ReadUsers()
-	assert.Equal("", usersmap["mustermann"].SessionID)
-	assert.NotNil(LogoutUser("falscherName"))
-	removeCompleteDataStorage()
+	assert.Equal(t, "", usersmap["mustermann"].SessionID)
+	assert.NotNil(t, LogoutUser("falscherName"))
 }
 
 func TestGetUserSession(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	CreateUser("mustermann", "musterpasswort")
-	assert.Equal("", GetUserSession("mustermann"))
-	LoginUser("mustermann", "musterpasswort", "1234")
-	assert.Equal("1234", GetUserSession("mustermann"))
-	removeCompleteDataStorage()
+	setup()
+	defer teardown()
+
+	_, err := CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
+	assert.Equal(t, "", GetUserSession("mustermann"))
+	err = LoginUser("mustermann", "musterpasswort", "1234")
+	assert.Nil(t, err)
+	assert.Equal(t, "1234", GetUserSession("mustermann"))
 }
 
 func TestGetUserBySession(t *testing.T) {
-	config.DataPath = "../datatest"
-	assert := assert.New(t)
-	CreateUser("mustermann", "musterpasswort")
-	LoginUser("mustermann", "musterpasswort", "1234")
-	actUser, err := GetUserBySession("1234")
-	assert.Equal("mustermann", actUser.Username)
-	_, err = GetUserBySession("")
-	assert.NotNil(err)
-	_, err = GetUserBySession("FalscheSession")
-	assert.NotNil(err)
-	removeCompleteDataStorage()
-}
+	setup()
+	defer teardown()
 
-func removeCompleteDataStorage() {
-	config.DataPath = "../datatest"
-	os.RemoveAll(config.DataPath)
-	InitDataStorage()
-	ticketMap = make(map[int]Ticket)
-	WriteToXML(0, config.DefinitionsFilePath())
+	_, err := CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
+	err = LoginUser("mustermann", "musterpasswort", "1234")
+	assert.Nil(t, err)
+	actUser, err := GetUserBySession("1234")
+	assert.Equal(t, "mustermann", actUser.Username)
+	_, err = GetUserBySession("")
+	assert.NotNil(t, err)
+	_, err = GetUserBySession("FalscheSession")
+	assert.NotNil(t, err)
 }
