@@ -267,6 +267,17 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
+	if len(r.PostFormValue("comment")) == 0 {
+		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
@@ -274,12 +285,6 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticket, err := XML_IO.ReadTicket(ticketId)
-	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
-		return
-	}
-
-	user, err := utils.GetUserFromCookie(r)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
 		return
@@ -297,6 +302,12 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
@@ -331,12 +342,6 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := utils.GetUserFromCookie(r)
-	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
-		return
-	}
-
 	// Resides on the ticket when assigned to oneself, else the user gets send to the tickets overview
 	if r.PostFormValue("editor") == user.Username {
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -346,6 +351,12 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
@@ -355,12 +366,6 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 	ticket, err := XML_IO.ReadTicket(ticketId)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
-		return
-	}
-
-	user, err := utils.GetUserFromCookie(r)
-	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
