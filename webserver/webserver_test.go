@@ -875,3 +875,69 @@ func TestServeTicketReleaseSuccess(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, req.Referer(), resultURL.Path)
 }
+
+func TestServeTicketsUnauthorized(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/tickets/", nil)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeTickets)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeTicketsShowTemplate(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/ticket/", nil)
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+	handler := http.HandlerFunc(ServeTickets)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestServeTicketsInvalidTicketID(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/ticket/1337", nil)
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+	handler := http.HandlerFunc(ServeTickets)
+
+	handler.ServeHTTP(rr, req)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageUrl(), resultURL.Path)
+}
