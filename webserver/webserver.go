@@ -174,7 +174,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the passwords are not empty and if they equal
+	// Check if the passwords are not empty and if they are equal
 	if !utils.CheckEqualStrings(r.PostFormValue("password1"), r.PostFormValue("password2")) {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
 		return
@@ -182,7 +182,8 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password1")
-	if utils.CheckUsernameFormal(username) && utils.CheckPasswdFormal(password) {
+
+	if !utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password) {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
 		return
 	}
@@ -246,8 +247,11 @@ func ServeErrorPage(w http.ResponseWriter, r *http.Request) {
 	_, err := utils.GetUserFromCookie(r)
 	isSignedIn := err == nil
 
-	// Error can be ignored, because the errCode will be set to 0 and hence a correct error page will be displayed
-	errCode, _ := strconv.Atoi(path.Base(r.URL.Path))
+	errCode, err := strconv.Atoi(path.Base(r.URL.Path))
+	if errCode > utils.ErrorCount-1 || err != nil {
+		http.Redirect(w, r, utils.ErrorUnknown.ErrorPageUrl(), http.StatusMovedPermanently)
+		return
+	}
 
 	ctx := context{HeaderTitle: "Error", ContentTemplate: "errorpage.html", IsSignedIn: isSignedIn, ErrorMsg: utils.Error(errCode).String()}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
