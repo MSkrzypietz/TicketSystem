@@ -1,12 +1,12 @@
 package utils
 
-// This file provides a recursive implementation of the Levenshtein distance
-// For more information see https://en.wikipedia.org/wiki/Levenshtein_distance
-
+// Checks the similarity between two strings using the allowedDeviation with the levenshtein algorithm
 func CheckStringsDeviation(allowedDeviation int, a, b string) bool {
 	return levenshteinDistance(a, len(a), b, len(b)) <= allowedDeviation
 }
 
+// This is a recursive implementation of the Levenshtein distance
+// For more information see https://en.wikipedia.org/wiki/Levenshtein_distance
 func levenshteinDistance(a string, len_a int, b string, len_b int) int {
 	var cost int
 
@@ -32,6 +32,7 @@ func levenshteinDistance(a string, len_a int, b string, len_b int) int {
 		levenshteinDistance(a, len_a-1, b, len_b-1)+cost)
 }
 
+// Returns the minimum from three numbers
 func minimum(a, b, c int) int {
 	if a <= b && a <= c {
 		return a
