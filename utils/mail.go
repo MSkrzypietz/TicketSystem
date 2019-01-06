@@ -29,9 +29,9 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 			if err != nil {
 				return newTicket, err
 			}
-			if newTicket.Status == Closed {
-				err = ChangeStatus(newTicket.Id, InProcess)
-				newTicket.Status = InProcess
+			if newTicket.Status == TicketStatusClosed {
+				err = ChangeStatus(newTicket.Id, TicketStatusInProcess)
+				newTicket.Status = TicketStatusInProcess
 				return newTicket, err
 			}
 			return newTicket, nil

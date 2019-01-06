@@ -72,8 +72,8 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 
 	ticketId, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil { // Show ticket overview
-		ticketsData := utils.GetTicketsByStatus(utils.UnProcessed)
-		ticketsData = append(ticketsData, utils.GetTicketsByStatus(utils.InProcess)...)
+		ticketsData := utils.GetTicketsByStatus(utils.TicketStatusOpen)
+		ticketsData = append(ticketsData, utils.GetTicketsByStatus(utils.TicketStatusInProcess)...)
 
 		ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, Username: user.Username, TicketsData: ticketsData}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
@@ -339,7 +339,7 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = utils.ChangeStatus(ticketId, utils.InProcess)
+	err = utils.ChangeStatus(ticketId, utils.TicketStatusInProcess)
 	if err != nil {
 		// Removing the editor before showing the error page
 		err = utils.ChangeEditor(ticketId, "")
@@ -380,7 +380,7 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = utils.ChangeStatus(ticketId, utils.UnProcessed)
+	err = utils.ChangeStatus(ticketId, utils.TicketStatusOpen)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
@@ -389,7 +389,7 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 	err = utils.ChangeEditor(ticketId, "")
 	if err != nil {
 		// Reverting the status
-		err = utils.ChangeStatus(ticketId, utils.InProcess)
+		err = utils.ChangeStatus(ticketId, utils.TicketStatusInProcess)
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
 	}
@@ -410,7 +410,7 @@ func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = utils.ChangeStatus(ticketId, utils.Closed)
+	err = utils.ChangeStatus(ticketId, utils.TicketStatusClosed)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return

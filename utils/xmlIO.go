@@ -31,9 +31,9 @@ type Message struct {
 }
 
 const (
-	UnProcessed = 0
-	InProcess   = 1
-	Closed      = 2
+	TicketStatusOpen      = iota
+	TicketStatusInProcess = 1
+	TicketStatusClosed    = 2
 )
 
 var ticketMap = make(map[int]Ticket)
@@ -118,7 +118,7 @@ func InitDataStorage() error {
 //function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns the ticket struct and an error whether the creation was successful.
 func CreateTicket(client string, reference string, text string) (Ticket, error) {
 	IDCounter := getTicketIDCounter() + 1
-	newTicket := Ticket{Id: IDCounter, Client: client, Reference: reference, Status: UnProcessed}
+	newTicket := Ticket{Id: IDCounter, Client: client, Reference: reference, Status: TicketStatusOpen}
 	err := WriteToXML(IDCounter, config.DefinitionsFilePath())
 	if err != nil {
 		return Ticket{}, err
@@ -264,7 +264,7 @@ func MergeTickets(firstTicketID int, secondTicketID int) error {
 	for _, msgList := range secondTicket.MessageList {
 		firstTicket.MessageList = append(firstTicket.MessageList, msgList)
 	}
-	err = ChangeStatus(firstTicketID, InProcess)
+	err = ChangeStatus(firstTicketID, TicketStatusInProcess)
 	if err != nil {
 		return err
 	}

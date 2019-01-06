@@ -21,7 +21,7 @@ func TestCreateTicketFromMail(t *testing.T) {
 	setup()
 
 	tmpTicket, _ := CreateTicket("test@mail", "testCaption", "testMsgOne")
-	assert.Nil(t, ChangeStatus(tmpTicket.Id, Closed))
+	assert.Nil(t, ChangeStatus(tmpTicket.Id, TicketStatusClosed))
 	expectedTicket, err = CreateTicketFromMail("test@mail", "testCaption", "testMsgTwo")
 	assert.Nil(t, err)
 	actTicket, err = ReadTicket(expectedTicket.Id)
