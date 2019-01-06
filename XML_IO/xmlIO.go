@@ -5,13 +5,12 @@ import (
 	"encoding/xml"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"time"
 )
-
-//TODO: (Kleinigkeit - nicht dringend): In users.xml gibt es 2 "root" Elemente? <UserList> oder <users> kann entfernt werden
 
 //struct that defines a ticket with the parameters ID, mail of the client, reference, actual status, editor and a list of all messages
 type Ticket struct {
@@ -60,8 +59,6 @@ func InitDataStorage() error {
 				return tmpErr
 			}
 		}
-	} else {
-		return err
 	}
 
 	_, err = os.Stat(config.UsersFilePath())
@@ -73,7 +70,10 @@ func InitDataStorage() error {
 			}
 		}
 		f, err := os.Create(config.UsersFilePath())
-		f.Close()
+		if err != nil {
+			return err
+		}
+		err = f.Close()
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,10 @@ func InitDataStorage() error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			f, err := os.Create(config.DefinitionsFilePath())
-			f.Close()
+			if err != nil {
+				return err
+			}
+			err = f.Close()
 			if err != nil {
 				return err
 			}
@@ -98,13 +101,17 @@ func InitDataStorage() error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			f, err := os.Create(config.MailFilePath())
-			f.Close()
+			if err != nil {
+				return err
+			}
+			err = f.Close()
 			if err != nil {
 				return err
 			}
 			return WriteToXML(Maillist{}, config.MailFilePath())
 		}
 	}
+
 	return err
 }
 
@@ -143,8 +150,14 @@ func ReadTicket(id int) (Ticket, error) {
 		return Ticket{}, err
 	}
 	var ticket Ticket
-	xml.Unmarshal(file, &ticket)
-	checkCache()
+	err = xml.Unmarshal(file, &ticket)
+	if err != nil {
+		return Ticket{}, err
+	}
+	err = checkCache()
+	if err != nil {
+		return Ticket{}, err
+	}
 	ticketMap[ticket.Id] = ticket
 	return ticket, nil
 }
@@ -153,7 +166,10 @@ func ReadTicket(id int) (Ticket, error) {
 func DeleteTicket(id int) error {
 	delete(ticketMap, id)
 	if id == getTicketIDCounter() {
-		WriteToXML(id-1, config.DefinitionsFilePath())
+		err := WriteToXML(id-1, config.DefinitionsFilePath())
+		if err != nil {
+			return err
+		}
 	}
 	err := os.Remove(config.TicketXMLPath(id))
 	if err != nil {
@@ -225,19 +241,22 @@ func getTicketIDCounter() int {
 		return -1
 	}
 	var IDCounter int
-	xml.Unmarshal(file, &IDCounter)
+	err = xml.Unmarshal(file, &IDCounter)
+	if err != nil {
+		return -1
+	}
 	return IDCounter
 }
 
 //merge two tickets, store them as one ticket and delete the other one. Returns an error whether the merge was successful.
 func MergeTickets(firstTicketID int, secondTicketID int) error {
-	firstTicket, err1 := ReadTicket(firstTicketID)
-	secondTicket, err2 := ReadTicket(secondTicketID)
-	if err1 != nil {
-		return err1
+	firstTicket, err := ReadTicket(firstTicketID)
+	if err != nil {
+		return err
 	}
-	if err2 != nil {
-		return err2
+	secondTicket, err := ReadTicket(secondTicketID)
+	if err != nil {
+		return err
 	}
 	if firstTicket.Editor != secondTicket.Editor {
 		return errors.New("the two tickets for the merging process do not have the same editors")
@@ -245,8 +264,14 @@ func MergeTickets(firstTicketID int, secondTicketID int) error {
 	for _, msgList := range secondTicket.MessageList {
 		firstTicket.MessageList = append(firstTicket.MessageList, msgList)
 	}
-	ChangeStatus(firstTicketID, InProcess)
-	DeleteTicket(secondTicketID)
+	err = ChangeStatus(firstTicketID, InProcess)
+	if err != nil {
+		return err
+	}
+	err = DeleteTicket(secondTicketID)
+	if err != nil {
+		return err
+	}
 	return StoreTicket(firstTicket)
 }
 
@@ -311,7 +336,10 @@ func ReadUsers() (map[string]User, error) {
 		return usersMap, err
 	}
 	var userlist Userlist
-	xml.Unmarshal(file, &userlist)
+	err = xml.Unmarshal(file, &userlist)
+	if err != nil && err != io.EOF {
+		return usersMap, err
+	}
 	for _, tmpUser := range userlist.User {
 		usersMap[tmpUser.Username] = tmpUser
 	}

@@ -80,7 +80,10 @@ func checkPortAvailability(port int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer l.Close() // TODO: How to handle this shit?
+	err = l.Close()
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
