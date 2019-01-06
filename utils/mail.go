@@ -22,8 +22,9 @@ type Maillist struct {
 //creating or merging a ticket that was send by mail
 func CreateTicketFromMail(mail string, reference string, message string) (Ticket, error) {
 	tickets := GetTicketsByClient(mail)
+
 	for _, actTicket := range tickets {
-		if actTicket.Reference == reference {
+		if CheckStringsDeviation(3, actTicket.Reference, reference) {
 			newTicket, err := AddMessage(actTicket, mail, message)
 			if err != nil {
 				return newTicket, err
@@ -35,10 +36,8 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 			}
 			return newTicket, nil
 		}
-
-		//TODO: schauen ob Ticket bereits vorhanden ist
-
 	}
+
 	return CreateTicket(mail, reference, message)
 }
 
