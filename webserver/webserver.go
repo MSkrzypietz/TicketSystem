@@ -53,6 +53,7 @@ func StartServer() {
 	http.HandleFunc("/addComment", utils.AuthWrapper(af, ServeAddComment))
 	http.HandleFunc("/assignTicket", utils.AuthWrapper(af, ServeTicketAssignment))
 	http.HandleFunc("/releaseTicket", utils.AuthWrapper(af, ServeTicketRelease))
+	http.HandleFunc("/closeTicket", utils.AuthWrapper(af, ServeCloseTicket))
 	http.HandleFunc("/mails", ServeMailsAPI)
 	http.HandleFunc("/mails/notify", ServeMailsSentNotification)
 
@@ -395,6 +396,28 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
+	_, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
+	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
+	err = XML_IO.ChangeStatus(ticketId, XML_IO.Closed)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, "/tickets/", http.StatusFound)
 }
 
 func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
