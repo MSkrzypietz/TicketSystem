@@ -1,7 +1,6 @@
 package main
 
 import (
-	"TicketSystem/XML_IO"
 	"TicketSystem/utils"
 	"TicketSystem/webserver"
 	"bytes"
@@ -19,7 +18,7 @@ func main() {
 	msg := flag.String("message", "Test Message", "Ticket Message")
 	flag.Parse()
 
-	mail := XML_IO.Mail{Mail: *mailAddress, Caption: *subject, Message: *msg}
+	mail := utils.Mail{Mail: *mailAddress, Caption: *subject, Message: *msg}
 	buf, err := xml.Marshal(mail)
 	if err != nil {
 		log.Fatal(err)

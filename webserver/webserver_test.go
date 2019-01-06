@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"github.com/stretchr/testify/assert"
@@ -437,7 +436,7 @@ func TestServeAddCommentInvalidInput(t *testing.T) {
 }
 
 func loginUser(rr *httptest.ResponseRecorder, username, password, uuid string) error {
-	err := XML_IO.LoginUser(username, password, uuid)
+	err := utils.LoginUser(username, password, uuid)
 	CreateSessionCookie(rr, uuid)
 	return err
 }
@@ -586,8 +585,8 @@ func TestServeAddCommentSuccessEmail(t *testing.T) {
 	assert.Equal(t, req.Referer(), resultURL.Path)
 }
 
-func createDummyTicket() (XML_IO.Ticket, error) {
-	return XML_IO.CreateTicket("test@gmail.com", "Subject Dummy", "Message dummy")
+func createDummyTicket() (utils.Ticket, error) {
+	return utils.CreateTicket("test@gmail.com", "Subject Dummy", "Message dummy")
 }
 
 func TestServeTicketAssignmentUnauthorized(t *testing.T) {
@@ -882,7 +881,7 @@ func TestServeTicketReleaseInvalidUser(t *testing.T) {
 
 	createUser("Test1234567", "Aa!123456")
 	testTicket, err := createDummyTicket()
-	assert.Nil(t, XML_IO.ChangeEditor(testTicket.Id, "Test1234567"))
+	assert.Nil(t, utils.ChangeEditor(testTicket.Id, "Test1234567"))
 	assert.Nil(t, err)
 
 	form := url.Values{}
@@ -919,7 +918,7 @@ func TestServeTicketReleaseSuccess(t *testing.T) {
 	defer teardown()
 
 	testTicket, err := createDummyTicket()
-	assert.Nil(t, XML_IO.ChangeEditor(testTicket.Id, "Test123"))
+	assert.Nil(t, utils.ChangeEditor(testTicket.Id, "Test123"))
 	assert.Nil(t, err)
 
 	form := url.Values{}

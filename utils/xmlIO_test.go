@@ -1,4 +1,4 @@
-package XML_IO
+package utils
 
 import (
 	"TicketSystem/config"

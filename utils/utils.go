@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"TicketSystem/XML_IO"
 	"errors"
 	"math/rand"
 	"net/http"
@@ -88,13 +87,13 @@ func CheckEqualStrings(string1, string2 string) bool {
 	}
 }
 
-func GetUserFromCookie(r *http.Request) (XML_IO.User, error) {
+func GetUserFromCookie(r *http.Request) (User, error) {
 	cookie, err := r.Cookie("session-id")
 	if err != nil {
-		return XML_IO.User{}, errors.New("session id is not set")
+		return User{}, errors.New("session id is not set")
 	}
 
-	return XML_IO.GetUserBySession(cookie.Value)
+	return GetUserBySession(cookie.Value)
 }
 
 func RemoveCookie(w http.ResponseWriter, name string) {

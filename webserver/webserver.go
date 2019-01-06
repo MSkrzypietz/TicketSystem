@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"encoding/xml"
@@ -19,13 +18,13 @@ type context struct {
 	ErrorMsg        string
 	Username        string
 	Users           []string
-	TicketsData     []XML_IO.Ticket
+	TicketsData     []utils.Ticket
 }
 
 var templates *template.Template
 
 func Setup() {
-	err := XML_IO.InitDataStorage()
+	err := utils.InitDataStorage()
 	if err != nil {
 		log.Fatal("Cannot start the ticket system due to problems initializing the data storage...")
 	}
@@ -35,7 +34,7 @@ func Setup() {
 func StartServer() {
 	Setup()
 	af := utils.AuthenticatorFunc(func(user, password string) bool {
-		ok, err := XML_IO.VerifyUser(user, password)
+		ok, err := utils.VerifyUser(user, password)
 		if err != nil {
 			log.Println(err)
 		}
@@ -73,8 +72,8 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 
 	ticketId, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil { // Show ticket overview
-		ticketsData := XML_IO.GetTicketsByStatus(XML_IO.UnProcessed)
-		ticketsData = append(ticketsData, XML_IO.GetTicketsByStatus(XML_IO.InProcess)...)
+		ticketsData := utils.GetTicketsByStatus(utils.UnProcessed)
+		ticketsData = append(ticketsData, utils.GetTicketsByStatus(utils.InProcess)...)
 
 		ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, Username: user.Username, TicketsData: ticketsData}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
@@ -84,14 +83,14 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticket, err := XML_IO.ReadTicket(ticketId)
+	ticket, err := utils.ReadTicket(ticketId)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
 	// Creating a user list without the signed in user to show the selection for ticket assignment
-	usersMap, err := XML_IO.ReadUsers()
+	usersMap, err := utils.ReadUsers()
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
 		return
@@ -102,7 +101,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		usersList = append(usersList, v.Username)
 	}
 
-	ctx := context{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: []XML_IO.Ticket{ticket}}
+	ctx := context{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: []utils.Ticket{ticket}}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
@@ -143,7 +142,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = XML_IO.CreateTicket(email, subject, message)
+	_, err = utils.CreateTicket(email, subject, message)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorTicketCreation.ErrorPageUrl(), http.StatusFound)
 		return
@@ -187,7 +186,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = XML_IO.CreateUser(username, password)
+	_, err = utils.CreateUser(username, password)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorUserCreation.ErrorPageUrl(), http.StatusFound)
 		return
@@ -214,7 +213,7 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uuid := utils.CreateUUID(64)
-	err = XML_IO.LoginUser(r.PostFormValue("username"), r.PostFormValue("password"), uuid)
+	err = utils.LoginUser(r.PostFormValue("username"), r.PostFormValue("password"), uuid)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorUserLogin.ErrorPageUrl(), http.StatusFound)
 		return
@@ -283,19 +282,19 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticket, err := XML_IO.ReadTicket(ticketId)
+	ticket, err := utils.ReadTicket(ticketId)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
 	if r.PostFormValue("sendoption") == "comments" {
-		_, err = XML_IO.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
+		_, err = utils.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
 		if err != nil {
 			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		}
 	} else {
-		err = XML_IO.SendMail(ticket.Client, "Reply to your ticket (ID: "+strconv.Itoa(ticket.Id)+")", r.PostFormValue("comment"))
+		err = utils.SendMail(ticket.Client, "Reply to your ticket (ID: "+strconv.Itoa(ticket.Id)+")", r.PostFormValue("comment"))
 		if err != nil {
 			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		}
@@ -324,7 +323,7 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the editor who is assigned to this ticket is an actual editor
-	usersMap, err := XML_IO.ReadUsers()
+	usersMap, err := utils.ReadUsers()
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
 		return
@@ -334,16 +333,16 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = XML_IO.ChangeEditor(ticketId, r.PostFormValue("editor"))
+	err = utils.ChangeEditor(ticketId, r.PostFormValue("editor"))
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
-	err = XML_IO.ChangeStatus(ticketId, XML_IO.InProcess)
+	err = utils.ChangeStatus(ticketId, utils.InProcess)
 	if err != nil {
 		// Removing the editor before showing the error page
-		err = XML_IO.ChangeEditor(ticketId, "")
+		err = utils.ChangeEditor(ticketId, "")
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
 	}
@@ -369,7 +368,7 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticket, err := XML_IO.ReadTicket(ticketId)
+	ticket, err := utils.ReadTicket(ticketId)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
 		return
@@ -381,16 +380,16 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = XML_IO.ChangeStatus(ticketId, XML_IO.UnProcessed)
+	err = utils.ChangeStatus(ticketId, utils.UnProcessed)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
 	}
 
-	err = XML_IO.ChangeEditor(ticketId, "")
+	err = utils.ChangeEditor(ticketId, "")
 	if err != nil {
 		// Reverting the status
-		err = XML_IO.ChangeStatus(ticketId, XML_IO.InProcess)
+		err = utils.ChangeStatus(ticketId, utils.InProcess)
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
 	}
@@ -411,7 +410,7 @@ func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = XML_IO.ChangeStatus(ticketId, XML_IO.Closed)
+	err = utils.ChangeStatus(ticketId, utils.Closed)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
 		return
@@ -437,7 +436,7 @@ func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMails(w http.ResponseWriter, _ *http.Request) {
-	rawMails, err := XML_IO.ReadMailsFile()
+	rawMails, err := utils.ReadMailsFile()
 	if err != nil {
 		utils.RespondWithError(w, http.StatusMethodNotAllowed, "We had issues fetching the E-Mails!")
 		return
@@ -447,13 +446,13 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 }
 
 func postMails(w http.ResponseWriter, r *http.Request) {
-	var mail XML_IO.Mail
+	var mail utils.Mail
 	err := xml.NewDecoder(r.Body).Decode(&mail)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
 	}
 
-	_, err = XML_IO.CreateTicketFromMail(mail.Mail, mail.Caption, mail.Message)
+	_, err = utils.CreateTicketFromMail(mail.Mail, mail.Caption, mail.Message)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "We had issues storing your sent E-Mails!")
 		return
@@ -473,7 +472,7 @@ func ServeMailsSentNotification(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
 	}
 
-	err = XML_IO.DeleteMails(mails.IDList)
+	err = utils.DeleteMails(mails.IDList)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "We ran into issues processing your request. Please try it again.")
 	}

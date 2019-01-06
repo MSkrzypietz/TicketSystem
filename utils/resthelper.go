@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"TicketSystem/XML_IO"
 	"encoding/xml"
 	"log"
 	"net/http"
@@ -15,9 +14,9 @@ type RestError struct {
 }
 
 type Response struct {
-	Success bool          `xml:"success"`
-	Data    []XML_IO.Mail `xml:"data>mails>mail"`
-	Err     RestError     `xml:"error"`
+	Success bool      `xml:"success"`
+	Data    []Mail    `xml:"data>mails>mail"`
+	Err     RestError `xml:"error"`
 }
 
 type MailIDs struct {
