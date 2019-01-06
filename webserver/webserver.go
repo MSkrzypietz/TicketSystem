@@ -4,6 +4,7 @@ import (
 	"TicketSystem/XML_IO"
 	"TicketSystem/config"
 	"TicketSystem/utils"
+	"encoding/xml"
 	"html/template"
 	"log"
 	"net/http"
@@ -52,6 +53,8 @@ func StartServer() {
 	http.HandleFunc("/addComment", utils.AuthWrapper(af, ServeAddComment))
 	http.HandleFunc("/assignTicket", utils.AuthWrapper(af, ServeTicketAssignment))
 	http.HandleFunc("/releaseTicket", utils.AuthWrapper(af, ServeTicketRelease))
+	http.HandleFunc("/mails", ServeMailsAPI)
+	http.HandleFunc("/mails/notify", ServeMailsSentNotification)
 
 	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
 	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
@@ -392,4 +395,43 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		// returns the list of mails which are to be sent
+		getMails(w, r)
+		return
+	}
+
+	utils.RespondWithError(w, http.StatusMethodNotAllowed, "This REST API only responds to GET and POST requests!")
+}
+
+func getMails(w http.ResponseWriter, _ *http.Request) {
+	rawMails, err := XML_IO.ReadMailsFile()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "We had issues fetching the E-Response!")
+		return
+	}
+
+	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true, Data: rawMails.Maillist})
+}
+
+func ServeMailsSentNotification(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "This REST API only responds to POST requests!")
+	}
+
+	var mails utils.MailIDs
+	err := xml.NewDecoder(r.Body).Decode(&mails)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
+	}
+
+	err = XML_IO.DeleteMails(mails.IDList)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "We ran into issues processing your request. Please try it again.")
+	}
+
+	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true})
 }

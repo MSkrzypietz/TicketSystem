@@ -44,10 +44,12 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 
 //delete all mails in the xml file which are already sent
 func DeleteMails(mailIds []int) error {
-	maillist, err := readMailsFile()
+	maillist, err := ReadMailsFile()
 	if err != nil {
 		return err
 	}
+
+	mailIdCounter := maillist.MailIdCounter
 
 	mailMap := make(map[int]Mail)
 	for _, actMail := range maillist.Maillist {
@@ -62,13 +64,14 @@ func DeleteMails(mailIds []int) error {
 	for _, actMail := range mailMap {
 		newMaillist.Maillist = append(newMaillist.Maillist, actMail)
 	}
-	newMaillist.MailIdCounter = maillist.MailIdCounter - len(mailIds)
+
+	newMaillist.MailIdCounter = mailIdCounter
 	return WriteToXML(newMaillist, config.MailFilePath())
 }
 
 //store the message as a mail in the specific xml file
 func SendMail(mail string, caption string, message string) error {
-	maillist, err := readMailsFile()
+	maillist, err := ReadMailsFile()
 	if err != nil {
 		return err
 	}
@@ -80,7 +83,7 @@ func SendMail(mail string, caption string, message string) error {
 }
 
 //get all mails from the xml file
-func readMailsFile() (Maillist, error) {
+func ReadMailsFile() (Maillist, error) {
 	file, err := ioutil.ReadFile(config.MailFilePath())
 	if err != nil {
 		return Maillist{}, err

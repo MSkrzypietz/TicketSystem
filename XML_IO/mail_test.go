@@ -53,10 +53,10 @@ func TestDeleteMails(t *testing.T) {
 	var idField []int
 	idField = append(idField, 1)
 	assert.Nil(t, DeleteMails(idField))
-	actMaillist, _ := readMailsFile()
+	actMaillist, _ := ReadMailsFile()
 	var expectedMaillist []Mail
 	expectedMaillist = append(expectedMaillist, Mail{"mail@test", "captionTwo", "test", 2})
-	assert.Equal(t, Maillist{1, expectedMaillist}, actMaillist)
+	assert.Equal(t, Maillist{2, expectedMaillist}, actMaillist)
 }
 
 func TestSendMail(t *testing.T) {
@@ -71,7 +71,7 @@ func TestSendMail(t *testing.T) {
 
 	var expectedMaillist []Mail
 	expectedMaillist = append(expectedMaillist, Mail{"test@test", "testCaption", "testMsg", 1})
-	actMaillist, err := readMailsFile()
+	actMaillist, err := ReadMailsFile()
 	assert.Nil(t, err)
 	assert.Equal(t, Maillist{1, expectedMaillist}, actMaillist)
 }
@@ -81,7 +81,7 @@ func TestReadMailsFile(t *testing.T) {
 	defer teardown()
 
 	config.DataPath = "wrongPath"
-	_, err := readMailsFile()
+	_, err := ReadMailsFile()
 	assert.NotNil(t, err)
 	config.DataPath = "datatest"
 
@@ -90,7 +90,7 @@ func TestReadMailsFile(t *testing.T) {
 	mails = append(mails, Mail{"test@test", "testTwo", "testTwo", 2})
 	expectedMaillist := Maillist{1, mails}
 	assert.Nil(t, WriteToXML(expectedMaillist, config.MailFilePath()))
-	actMaillist, err := readMailsFile()
+	actMaillist, err := ReadMailsFile()
 	assert.Nil(t, err)
 	assert.Equal(t, expectedMaillist, actMaillist)
 }
