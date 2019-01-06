@@ -31,9 +31,9 @@ type Message struct {
 }
 
 const (
-	TicketStatusOpen      = iota
-	TicketStatusInProcess = 1
-	TicketStatusClosed    = 2
+	TicketStatusOpen = iota
+	TicketStatusInProcess
+	TicketStatusClosed
 )
 
 var ticketMap = make(map[int]Ticket)
