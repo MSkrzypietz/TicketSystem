@@ -179,7 +179,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password1")
 
-	// Removes annoying checks when testing
+	// DebugMode removes annoying checks when testing
 	if !config.DebugMode || (!utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password)) {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
 		return
