@@ -427,17 +427,41 @@ func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Method == http.MethodPost {
+		// saves the posted mails to data storage
+		postMails(w, r)
+		return
+	}
+
 	utils.RespondWithError(w, http.StatusMethodNotAllowed, "This REST API only responds to GET and POST requests!")
 }
 
 func getMails(w http.ResponseWriter, _ *http.Request) {
 	rawMails, err := XML_IO.ReadMailsFile()
 	if err != nil {
-		utils.RespondWithError(w, http.StatusMethodNotAllowed, "We had issues fetching the E-Response!")
+		utils.RespondWithError(w, http.StatusMethodNotAllowed, "We had issues fetching the E-Mails!")
 		return
 	}
 
 	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true, Data: rawMails.Maillist})
+}
+
+func postMails(w http.ResponseWriter, r *http.Request) {
+	var mails XML_IO.Maillist
+	err := xml.NewDecoder(r.Body).Decode(&mails)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
+	}
+
+	for _, mail := range mails.Maillist {
+		_, err := XML_IO.CreateTicketFromMail(mail.Mail, mail.Caption, mail.Message)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "We had issues storing your sent E-Mails!")
+			return
+		}
+	}
+
+	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true})
 }
 
 func ServeMailsSentNotification(w http.ResponseWriter, r *http.Request) {
