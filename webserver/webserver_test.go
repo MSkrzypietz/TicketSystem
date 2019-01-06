@@ -1044,3 +1044,83 @@ func TestServeTicketsSuccess(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
+
+func TestServeCloseTicketUnauthorized(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/closeTicket", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeCloseTicket)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeCloseTicketInvalidURL(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/closeTicket", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/MyTicket")
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeCloseTicket)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+}
+
+func TestServeCloseTicketSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/closeTicket", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/ticket/"+strconv.Itoa(testTicket.Id))
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeCloseTicket)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusMovedPermanently)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, "/tickets/", resultURL.Path)
+}

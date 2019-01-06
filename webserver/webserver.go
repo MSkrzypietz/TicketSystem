@@ -416,7 +416,7 @@ func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/tickets/", http.StatusFound)
+	http.Redirect(w, r, "/tickets/", http.StatusMovedPermanently)
 }
 
 func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
