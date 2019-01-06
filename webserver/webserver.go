@@ -447,18 +447,16 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 }
 
 func postMails(w http.ResponseWriter, r *http.Request) {
-	var mails XML_IO.Maillist
-	err := xml.NewDecoder(r.Body).Decode(&mails)
+	var mail XML_IO.Mail
+	err := xml.NewDecoder(r.Body).Decode(&mail)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
 	}
 
-	for _, mail := range mails.Maillist {
-		_, err := XML_IO.CreateTicketFromMail(mail.Mail, mail.Caption, mail.Message)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "We had issues storing your sent E-Mails!")
-			return
-		}
+	_, err = XML_IO.CreateTicketFromMail(mail.Mail, mail.Caption, mail.Message)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "We had issues storing your sent E-Mails!")
+		return
 	}
 
 	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true})
