@@ -35,7 +35,7 @@
             <p class="card-text">{{(index $ticket.MessageList 0).Text}}</p>
         </div>
         <div class="card-footer text-muted py-1">
-            <small>Date: {{(index $ticket.MessageList 0).CreationDate}}  -  Email: {{$ticket.Client}}  -  Status: {{$ticket.Status}} - Editor: {{$ticket.Editor}}</small>
+            <small>Date: {{(index $ticket.MessageList 0).CreationDate}}  -  Email: {{$ticket.Client}}{{if ne $ticket.Editor ""}}  -  Being processed by: {{$ticket.Editor}}{{end}}</small>
         </div>
     </div>
     <br>
@@ -68,6 +68,7 @@
                     <div class="col-md-12">
                         <div class="text-center">
                             <div class="d-flex justify-content-center">
+                                <button type="submit" class="btn btn-primary btn-rounded z-depth-1a my-0">Send to</button>
                                 <div>
                                     <div class="radio">
                                         <label><input type="radio" name="sendoption" value="comments" checked>Comments</label>
@@ -76,7 +77,6 @@
                                         <label class="mb-0"><input type="radio" name="sendoption" value="customer">Customer</label>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-rounded z-depth-1a my-0">Send to</button>
                             </div>
                         </div>
                     </div>
