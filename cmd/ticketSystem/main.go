@@ -33,6 +33,7 @@ func handleFlags() {
 	serverKeyPath := flag.String("key", config.ServerKeyPath, "Path to server key")
 	templatePath := flag.String("templates", config.TemplatePath, "Path to templates folder")
 	port := flag.Int("port", config.Port, "Port on which the server should run")
+	debugMode := flag.Bool("debug", config.DebugMode, "Decides the mode the server should run on")
 	flag.Parse()
 
 	handlePort(*port)
@@ -42,6 +43,7 @@ func handleFlags() {
 		path{*serverKeyPath, &config.ServerKeyPath, "key"},
 		path{*templatePath, &config.TemplatePath, "templates"},
 	)
+	config.DebugMode = *debugMode
 }
 
 func handlePort(port int) {

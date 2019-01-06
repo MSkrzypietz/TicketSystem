@@ -11,6 +11,7 @@ var (
 	ServerKeyPath  = path.Join("etc", "server.key")
 	TemplatePath   = "templates"
 	Port           = 4443
+	DebugMode      = true
 )
 
 func UsersPath() string {
