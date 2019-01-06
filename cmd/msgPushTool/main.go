@@ -36,7 +36,10 @@ func main() {
 	}
 
 	if response.Success {
-		fmt.Println("Successfully received the email.")
+		fmt.Println("Successfully received the email with the following content:")
+		fmt.Printf("\tE-Mail: %s\n", mail.Mail)
+		fmt.Printf("\tSubject: %s\n", mail.Caption)
+		fmt.Printf("\tMessage: %s\n", mail.Message)
 	} else {
 		fmt.Println("We were not able to store your email. Please try it again!")
 	}
