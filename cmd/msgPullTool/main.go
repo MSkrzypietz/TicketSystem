@@ -22,12 +22,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("There are %d E-Mails to be sent:\n\n", len(mails.Data))
+	fmt.Printf("There are %d E-Mails to be sent:\n", len(mails.Data))
 	for _, mail := range mails.Data {
+		fmt.Println()
 		fmt.Printf("ID: %d\n", mail.MailId)
 		fmt.Printf("E-Mail: %s\n", mail.Mail)
 		fmt.Printf("Subject: %s\n", mail.Caption)
 		fmt.Printf("Message: %s\n", mail.Message)
-		fmt.Println()
 	}
 }
