@@ -6,6 +6,8 @@
                     <div class="card-body card-body-cascade text-center">
                         {{if eq .Editor $.Username}}
                             <span class="card-notify-badge">Assigned to you!</span>
+                        {{else if eq .Status 1}}
+                            <span class="card-notify-badge">Being processed by someone else!</span>
                         {{end}}
                         <h4 class="card-title text-dark"><strong>{{.Reference}}</strong></h4>
                         <h6 class="font-weight-bold indigo-text py-1">{{.Client}}</h6>
