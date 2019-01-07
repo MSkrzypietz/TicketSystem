@@ -302,9 +302,9 @@ func checkCache() error {
 			tmpInt++
 		}
 		return fmt.Errorf("no ticket found in the cache")
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 //creates a new user and returns the user and an error whether the creation was successful.

@@ -4,7 +4,6 @@ import (
 	"TicketSystem/config"
 	"encoding/xml"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"os"
 	"testing"
@@ -104,6 +103,10 @@ func TestIDCounter(t *testing.T) {
 	setup()
 	defer teardown()
 
+	config.DataPath = "wrongPath"
+	assert.NotNil(t, getTicketIDCounter())
+
+	config.DataPath = "datatest"
 	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(t, err)
 	_, err = CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
@@ -193,11 +196,16 @@ func TestChangeStatus(t *testing.T) {
 	setup()
 	defer teardown()
 
+	config.DataPath = "wrongPath"
+	assert.NotNil(t, ChangeStatus(1, TicketStatusClosed))
+
+	config.DataPath = "datatest"
 	_, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(t, err)
 	err = ChangeStatus(getTicketIDCounter(), 2)
 	assert.Nil(t, err)
-	ticket, _ := ReadTicket(getTicketIDCounter())
+	ticket, err := ReadTicket(getTicketIDCounter())
+	assert.Nil(t, err)
 	assert.Equal(t, 2, ticket.Status)
 }
 
@@ -224,7 +232,12 @@ func TestMerging(t *testing.T) {
 	setup()
 	defer teardown()
 
-	_, err := CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
+	ticket, err := CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
+	assert.Nil(t, err)
+	assert.NotNil(t, MergeTickets(ticket.Id, 1337))
+	assert.NotNil(t, MergeTickets(1337, ticket.Id))
+
+	_, err = CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
 	assert.Nil(t, err)
 	_, err = CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Erika Musterfrau. Thank you.")
 	assert.Nil(t, err)
@@ -293,8 +306,11 @@ func TestCreateUser(t *testing.T) {
 	assert.NotNil(t, err)
 
 	config.DataPath = "datatest"
-	expectedUser, _ := CreateUser("mustermann", "musterpasswort")
-	assert.Equal(t, expectedUser.Username, "mustermann")
+	_, err = CreateUser("mustermann", "musterpasswort")
+	assert.Nil(t, err)
+
+	_, err = CreateUser("mustermann", "musterpasswort")
+	assert.NotNil(t, err)
 }
 
 func TestStoreUser(t *testing.T) {
@@ -332,7 +348,12 @@ func TestCheckUser(t *testing.T) {
 	setup()
 	defer teardown()
 
-	_, err := CreateUser("mustermann", "musterpasswort")
+	config.DataPath = "wrongPath"
+	_, err := CheckUser("")
+	assert.NotNil(t, err)
+
+	config.DataPath = "datatest"
+	_, err = CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
 	tmpBool, err := CheckUser("mustermann")
 	assert.Nil(t, err)
@@ -351,11 +372,14 @@ func TestVerifyUser(t *testing.T) {
 	assert.NotNil(t, err)
 
 	config.DataPath = "datatest"
-	_, err = CreateUser("mustermann", "musterpasswort")
+	user, err := CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
-	tmpPsswd, _ := bcrypt.GenerateFromPassword([]byte("mmusterpasswort"), bcrypt.DefaultCost)
-	tmpBool, err := VerifyUser("mustermann", string(tmpPsswd))
-	tmpBool, err = VerifyUser("mustermann", "xxx")
+
+	tmpBool, err := VerifyUser(user.Username, user.Password)
+	assert.True(t, tmpBool)
+	assert.Nil(t, err)
+
+	tmpBool, err = VerifyUser(user.Username, "xxx")
 	assert.False(t, tmpBool)
 	assert.NotNil(t, err)
 }
@@ -364,7 +388,12 @@ func TestLoginUser(t *testing.T) {
 	setup()
 	defer teardown()
 
-	_, err := CreateUser("mustermann", "musterpasswort")
+	config.DataPath = "wrongPath"
+	err := LoginUser("", "", "")
+	assert.NotNil(t, err)
+
+	config.DataPath = "datatest"
+	_, err = CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
 	assert.Nil(t, LoginUser("mustermann", "musterpasswort", "1234"))
 	assert.NotNil(t, LoginUser("mustermann", "falschespasswort", "1234"))
@@ -376,7 +405,12 @@ func TestLogoutUser(t *testing.T) {
 	setup()
 	defer teardown()
 
-	_, err := CreateUser("mustermann", "musterpasswort")
+	config.DataPath = "wrongPath"
+	err := LogoutUser("")
+	assert.NotNil(t, err)
+
+	config.DataPath = "datatest"
+	_, err = CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
 	assert.Nil(t, LoginUser("mustermann", "musterpasswort", "1234"))
 	usersmap, _ := ReadUsers()
