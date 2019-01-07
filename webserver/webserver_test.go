@@ -473,7 +473,7 @@ func TestServeAddCommentInvalidURL(t *testing.T) {
 	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
 }
 
-func TestServeAddCommentSuccess(t *testing.T) {
+func TestServeAddCommentInvalidTicketID(t *testing.T) {
 	setup()
 	defer teardown()
 
