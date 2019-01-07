@@ -9,14 +9,15 @@ import (
 )
 
 func RegExMail(email string) bool {
-	mailResEx := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]" +
-		"(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}" +
-		"[a-zA-Z0-9])?)*$")
-	return mailResEx.MatchString(email)
+	emailRegExp := regexp.MustCompile(
+		"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]" +
+			"(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}" +
+			"[a-zA-Z0-9])?)*$")
+	return emailRegExp.MatchString(email)
 }
 
 func CheckEmptyXssString(text string) bool {
-	if text == "" || len(text) > 400 {
+	if len(text) == 0 || len(text) > 400 {
 		return false
 	}
 	xss := "<>[]"
@@ -33,25 +34,16 @@ func CreateUUID(length int) string {
 	return string(byteSlice)
 }
 
+// Checks if the inputs contains only ASCII letters and digits, with hyphens, underscores and spaces
+// as internal separators.
+// Source: https://stackoverflow.com/questions/1221985/how-to-validate-a-user-name-with-regex
 func CheckUsernameFormal(name string) bool {
-	if name == "" || len(name) < 4 {
+	if len(name) <= 4 || len(name) >= 30 {
 		return false
 	}
-	numbers := "0123456789"
-	letters := "abcdefghijklmnopqrstuvwxyz"
-	space := " "
 
-	if strings.ContainsAny(name, numbers) {
-		if strings.ContainsAny(name, letters) {
-			return !strings.ContainsAny(name, space)
-		} else {
-			// No letters in username
-			return false
-		}
-	} else {
-		// No number in username
-		return false
-	}
+	nameRegExp := regexp.MustCompile("^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$")
+	return nameRegExp.MatchString(name)
 }
 
 func CheckPasswdFormal(passwd string) bool {

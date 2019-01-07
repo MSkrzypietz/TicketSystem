@@ -43,19 +43,24 @@ func TestCreateUUID(t *testing.T) {
 }
 
 func TestCheckUsernameFormal(t *testing.T) {
-	name1 := "username" // not valid
-	name2 := ""         // not valid
-	name3 := "1234"     // not valid
-	name4 := "test123"  // valid
-	name5 := "test 123" // not valid
-	name6 := "t3"       // not valid
-
-	assert.False(t, CheckUsernameFormal(name1))
-	assert.False(t, CheckUsernameFormal(name2))
-	assert.False(t, CheckUsernameFormal(name3))
-	assert.True(t, CheckUsernameFormal(name4))
-	assert.False(t, CheckUsernameFormal(name5))
-	assert.False(t, CheckUsernameFormal(name6))
+	tests := []struct {
+		a        string
+		expected bool
+	}{
+		{"user", false},
+		{"InvalidTestWithOverThirtyCharacters", false},
+		{"_username", false},
+		{"username_", false},
+		{"us  ername", false},
+		{"_us--ername", false},
+		{"username", true},
+		{"1username", true},
+		{"username1", true},
+		{"use1234rname", true},
+	}
+	for _, d := range tests {
+		assert.Equal(t, d.expected, CheckUsernameFormal(d.a))
+	}
 }
 
 func TestCheckPasswdFormal(t *testing.T) {
