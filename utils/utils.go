@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -90,7 +90,7 @@ func CheckEqualStrings(string1, string2 string) bool {
 func GetUserFromCookie(r *http.Request) (User, error) {
 	cookie, err := r.Cookie("session-id")
 	if err != nil {
-		return User{}, errors.New("session id is not set")
+		return User{}, fmt.Errorf("session id is not set")
 	}
 
 	return GetUserBySession(cookie.Value)

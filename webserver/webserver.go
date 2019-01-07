@@ -66,7 +66,7 @@ func StartServer() {
 func ServeTickets(w http.ResponseWriter, r *http.Request) {
 	user, err := utils.GetUserFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -78,21 +78,21 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		ctx := context{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, Username: user.Username, TicketsData: ticketsData}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
 		if err != nil {
-			http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+			http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 		}
 		return
 	}
 
 	ticket, err := utils.ReadTicket(ticketId)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	// Creating a user list without the signed in user to show the selection for ticket assignment
 	usersMap, err := utils.ReadUsers()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageURL(), http.StatusFound)
 		return
 	}
 	delete(usersMap, user.Username)
@@ -104,7 +104,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 	ctx := context{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: []utils.Ticket{ticket}}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 	}
 }
 
@@ -113,7 +113,7 @@ func ServeNewTicket(w http.ResponseWriter, r *http.Request) {
 	ctx := context{HeaderTitle: "New Ticket", ContentTemplate: "newticket.html", IsSignedIn: err == nil}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 	}
 }
 
@@ -122,14 +122,14 @@ func ServeIndex(w http.ResponseWriter, r *http.Request) {
 	ctx := context{HeaderTitle: "Home", ContentTemplate: "home.html", IsSignedIn: err == nil}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 	}
 }
 
 func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -138,13 +138,13 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	message := r.PostFormValue("message")
 
 	if email == "" || subject == "" || message == "" || !utils.RegExMail(email) || !utils.CheckEmptyXssString(subject) || !utils.CheckEmptyXssString(message) {
-		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	_, err = utils.CreateTicket(email, subject, message)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorTicketCreation.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorTicketCreation.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -154,7 +154,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -165,14 +165,14 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 		ctx := context{HeaderTitle: "Sign up", ContentTemplate: "signup.html", IsSignedIn: false}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
 		if err != nil {
-			http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+			http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 		}
 		return
 	}
 
 	// Check if the passwords are not empty and if they are equal
 	if !utils.CheckEqualStrings(r.PostFormValue("password1"), r.PostFormValue("password2")) {
-		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -181,13 +181,13 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 
 	// DebugMode removes annoying checks when testing
 	if !config.DebugMode || (!utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password)) {
-		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	_, err = utils.CreateUser(username, password)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUserCreation.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUserCreation.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -197,7 +197,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -206,7 +206,7 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 		ctx := context{HeaderTitle: "Sign in", ContentTemplate: "signin.html", IsSignedIn: false}
 		err = templates.ExecuteTemplate(w, "index.html", ctx)
 		if err != nil {
-			http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+			http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 		}
 		return
 	}
@@ -214,7 +214,7 @@ func ServeSignIn(w http.ResponseWriter, r *http.Request) {
 	uuid := utils.CreateUUID(64)
 	err = utils.LoginUser(r.PostFormValue("username"), r.PostFormValue("password"), uuid)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUserLogin.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUserLogin.ErrorPageURL(), http.StatusFound)
 		return
 	}
 	CreateSessionCookie(w, uuid)
@@ -245,57 +245,57 @@ func ServeErrorPage(w http.ResponseWriter, r *http.Request) {
 	isSignedIn := err == nil
 
 	errCode, err := strconv.Atoi(path.Base(r.URL.Path))
-	if errCode > utils.ErrorCount-1 || err != nil {
-		http.Redirect(w, r, utils.ErrorUnknown.ErrorPageUrl(), http.StatusMovedPermanently)
+	if errCode > utils.ErrorCount()-1 || err != nil {
+		http.Redirect(w, r, utils.ErrorUnknown.ErrorPageURL(), http.StatusMovedPermanently)
 		return
 	}
 
 	ctx := context{HeaderTitle: "Error", ContentTemplate: "errorpage.html", IsSignedIn: isSignedIn, ErrorMsg: utils.Error(errCode).String()}
 	err = templates.ExecuteTemplate(w, "index.html", ctx)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorTemplateExecution.ErrorPageURL(), http.StatusFound)
 	}
 }
 
 func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	user, err := utils.GetUserFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	if len(r.PostFormValue("comment")) == 0 {
-		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	ticket, err := utils.ReadTicket(ticketId)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	if r.PostFormValue("sendoption") == "comments" {
 		_, err = utils.AddMessage(ticket, user.Username, r.PostFormValue("comment"))
 		if err != nil {
-			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		}
 	} else {
 		err = utils.SendMail(ticket.Client, "Reply to your ticket (ID: "+strconv.Itoa(ticket.Id)+")", r.PostFormValue("comment"))
 		if err != nil {
-			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		}
 	}
 
@@ -305,36 +305,36 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorFormParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	user, err := utils.GetUserFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	// Check if the editor who is assigned to this ticket is an actual editor
 	usersMap, err := utils.ReadUsers()
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageURL(), http.StatusFound)
 		return
 	}
 	if _, ok := usersMap[r.PostFormValue("editor")]; !ok {
-		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	err = utils.ChangeEditor(ticketId, r.PostFormValue("editor"))
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -342,7 +342,7 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Removing the editor before showing the error page
 		err = utils.ChangeEditor(ticketId, "")
-		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -357,31 +357,31 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 	user, err := utils.GetUserFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	ticket, err := utils.ReadTicket(ticketId)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataFetching.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	// Checking if the user is malicious and tries to release the ticket of someone else
 	if ticket.Editor != user.Username {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	err = utils.ChangeStatus(ticketId, utils.TicketStatusOpen)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -389,7 +389,7 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Reverting the status
 		err = utils.ChangeStatus(ticketId, utils.TicketStatusInProcess)
-		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
@@ -399,19 +399,19 @@ func ServeTicketRelease(w http.ResponseWriter, r *http.Request) {
 func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
 	_, err := utils.GetUserFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	ticketId, err := strconv.Atoi(path.Base(r.Referer()))
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
 		return
 	}
 
 	err = utils.ChangeStatus(ticketId, utils.TicketStatusClosed)
 	if err != nil {
-		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageUrl(), http.StatusFound)
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		return
 	}
 

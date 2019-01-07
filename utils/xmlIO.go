@@ -3,7 +3,7 @@ package utils
 import (
 	"TicketSystem/config"
 	"encoding/xml"
-	"errors"
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"io/ioutil"
@@ -259,7 +259,7 @@ func MergeTickets(firstTicketID int, secondTicketID int) error {
 		return err
 	}
 	if firstTicket.Editor != secondTicket.Editor {
-		return errors.New("the two tickets for the merging process do not have the same editors")
+		return fmt.Errorf("the two tickets for the merging process do not have the same editors")
 	}
 	for _, msgList := range secondTicket.MessageList {
 		firstTicket.MessageList = append(firstTicket.MessageList, msgList)
@@ -301,7 +301,7 @@ func checkCache() error {
 			}
 			tmpInt++
 		}
-		return errors.New("no ticket found in the cache")
+		return fmt.Errorf("no ticket found in the cache")
 	} else {
 		return nil
 	}
@@ -314,7 +314,7 @@ func CreateUser(name string, password string) (User, error) {
 		return User{}, err
 	}
 	if _, ok := usersMap[name]; ok {
-		return User{}, errors.New("a user with the same name already exists")
+		return User{}, fmt.Errorf("a user with the same name already exists")
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
@@ -375,7 +375,7 @@ func VerifyUser(name string, password string) (bool, error) {
 	}
 
 	if password != usersMap[name].Password {
-		return false, errors.New("passwords don't match. Cannot verify the user")
+		return false, fmt.Errorf("passwords don't match. Cannot verify the user")
 	}
 
 	return true, nil
@@ -385,7 +385,7 @@ func VerifyUser(name string, password string) (bool, error) {
 func LoginUser(name string, password string, session string) error {
 	usersMap, err := ReadUsers()
 	if err != nil {
-		return errors.New("wrong path to user file")
+		return fmt.Errorf("wrong path to user file")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(usersMap[name].Password), []byte(password))
@@ -405,7 +405,7 @@ func LogoutUser(name string) error {
 		return err
 	}
 	if usersmap[name].Username != name {
-		return errors.New("user does not exist")
+		return fmt.Errorf("user does not exist")
 	}
 	tmpUser := usersmap[name]
 	tmpUser.SessionID = ""
@@ -422,7 +422,7 @@ func GetUserSession(name string) string {
 //returns an user by a specified session id
 func GetUserBySession(session string) (User, error) {
 	if session == "" {
-		return User{}, errors.New("session is not set")
+		return User{}, fmt.Errorf("session is not set")
 	}
 	usersMap, _ := ReadUsers()
 	for _, tmpUser := range usersMap {
@@ -430,5 +430,5 @@ func GetUserBySession(session string) (User, error) {
 			return tmpUser, nil
 		}
 	}
-	return User{}, errors.New("user does not exist")
+	return User{}, fmt.Errorf("user does not exist")
 }

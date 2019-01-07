@@ -152,7 +152,7 @@ func TestServeUserRegistrationPasswordsDontMatch(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeUserRegistrationInvalidUsername(t *testing.T) {
@@ -175,7 +175,7 @@ func TestServeUserRegistrationInvalidUsername(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeUserRegistrationInvalidPassword(t *testing.T) {
@@ -198,7 +198,7 @@ func TestServeUserRegistrationInvalidPassword(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeUserRegistrationSuccess(t *testing.T) {
@@ -275,7 +275,7 @@ func TestServeSignInInvalidCredentials(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUserLogin.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUserLogin.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeSignInSuccessWithHomeRedirect(t *testing.T) {
@@ -353,7 +353,7 @@ func TestServeTicketCreationInvalidInputs(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketCreationSuccess(t *testing.T) {
@@ -397,7 +397,7 @@ func TestServeAddCommentUnauthorized(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeAddCommentInvalidInput(t *testing.T) {
@@ -430,7 +430,7 @@ func TestServeAddCommentInvalidInput(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
 func loginUser(rr *httptest.ResponseRecorder, username, password, uuid string) error {
@@ -470,7 +470,7 @@ func TestServeAddCommentInvalidURL(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeAddCommentSuccess(t *testing.T) {
@@ -504,7 +504,7 @@ func TestServeAddCommentSuccess(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeAddCommentSuccessComment(t *testing.T) {
@@ -604,7 +604,7 @@ func TestServeTicketAssignmentUnauthorized(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketAssignmentInvalidURL(t *testing.T) {
@@ -638,7 +638,7 @@ func TestServeTicketAssignmentInvalidURL(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketAssignmentInvalidEditor(t *testing.T) {
@@ -675,7 +675,7 @@ func TestServeTicketAssignmentInvalidEditor(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketAssignmentInvalidTicketID(t *testing.T) {
@@ -709,7 +709,7 @@ func TestServeTicketAssignmentInvalidTicketID(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorDataStoring.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorDataStoring.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketAssignmentSuccessWithoutRedirect(t *testing.T) {
@@ -804,7 +804,7 @@ func TestServeTicketReleaseUnauthorized(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketReleaseInvalidURL(t *testing.T) {
@@ -837,7 +837,7 @@ func TestServeTicketReleaseInvalidURL(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketReleaseInvalidTicketID(t *testing.T) {
@@ -870,7 +870,7 @@ func TestServeTicketReleaseInvalidTicketID(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorDataFetching.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorDataFetching.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketReleaseInvalidUser(t *testing.T) {
@@ -908,7 +908,7 @@ func TestServeTicketReleaseInvalidUser(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketReleaseSuccess(t *testing.T) {
@@ -961,7 +961,7 @@ func TestServeTicketsUnauthorized(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketsShowTemplate(t *testing.T) {
@@ -1011,7 +1011,7 @@ func TestServeTicketsInvalidTicketID(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorInvalidTicketID.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeTicketsSuccess(t *testing.T) {
@@ -1057,7 +1057,7 @@ func TestServeCloseTicketUnauthorized(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeCloseTicketInvalidURL(t *testing.T) {
@@ -1087,7 +1087,7 @@ func TestServeCloseTicketInvalidURL(t *testing.T) {
 	assert.Equal(t, rr.Code, http.StatusFound)
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
-	assert.Equal(t, utils.ErrorURLParsing.ErrorPageUrl(), resultURL.Path)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
 }
 
 func TestServeCloseTicketSuccess(t *testing.T) {

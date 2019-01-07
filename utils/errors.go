@@ -19,38 +19,34 @@ const (
 	ErrorDataStoring
 )
 
-const ErrorCount = 12
-
-func (err Error) String() string {
-	switch err {
-	case ErrorUnknown:
-		return "We ran into an unknown error!"
-	case ErrorUnauthorized:
-		return "You are not authorized for your actions!"
-	case ErrorTemplateExecution:
-		return "We had problems serving your requested site for you!"
-	case ErrorInvalidTicketID:
-		return "The requested ticket does not exist!"
-	case ErrorDataFetching:
-		return "We had internal problems fetching the requested data!"
-	case ErrorFormParsing:
-		return "We had problems parsing your posted form!"
-	case ErrorInvalidInputs:
-		return "Your Inputs are invalid. Please check your inputs and try again!"
-	case ErrorTicketCreation:
-		return "We had issues creating your ticket. Please try it again!"
-	case ErrorUserCreation:
-		return "We had issues signing you up to our services. Please try it again!"
-	case ErrorUserLogin:
-		return "We had issues signing you in. Please try it again!"
-	case ErrorURLParsing:
-		return "We had issues parsing your URL. Please try it again!"
-	case ErrorDataStoring:
-		return "We had issues storing your changes. Please try it again!"
-	}
-	return ErrorUnknown.String()
+// This is inspired by http://golang-basic.blogspot.com/2014/07/enumeration-example-golang.html
+// This helps to prevent bugs by not having to manually maintaining a constant for the error count
+var errors = []string{
+	"We ran into an unknown error!",
+	"You are not authorized for your actions!",
+	"We had problems serving your requested site for you!",
+	"The requested ticket does not exist!",
+	"We had internal problems fetching the requested data!",
+	"We had problems parsing your posted form!",
+	"Your Inputs are invalid. Please check your inputs and try again!",
+	"We had issues creating your ticket. Please try it again!",
+	"We had issues signing you up to our services. Please try it again!",
+	"We had issues signing you in. Please try it again!",
+	"We had issues parsing your URL. Please try it again!",
+	"We had issues storing your changes. Please try it again!",
 }
 
-func (err Error) ErrorPageUrl() string {
+// Returns the error message for a particular error
+func (err Error) String() string {
+	return errors[err]
+}
+
+// Returns the corresponding URL for a particular error
+func (err Error) ErrorPageURL() string {
 	return "/error/" + strconv.Itoa(int(err))
+}
+
+// Returns the total count of registered errors
+func ErrorCount() int {
+	return len(errors)
 }
