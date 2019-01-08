@@ -368,17 +368,17 @@ func CheckUser(name string) (bool, error) {
 }
 
 //checks if the username and the password is correct. Returns a bool whether it is correct.
-func VerifyUser(name string, password string) (bool, error) {
+func VerifySessionCookie(name string, password string) error {
 	usersMap, err := ReadUsers()
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if password != usersMap[name].Password {
-		return false, fmt.Errorf("passwords don't match. Cannot verify the user")
+		return fmt.Errorf("invalid session cookie")
 	}
 
-	return true, nil
+	return nil
 }
 
 //Login of a user to the ticket system. Returns an error if an error occurs.

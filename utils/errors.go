@@ -31,7 +31,7 @@ var errors = []string{
 	"Your Inputs are invalid. Please check your inputs and try again!",
 	"We had issues creating your ticket. Please try it again!",
 	"We had issues signing you up to our services. Please try it again!",
-	"We had issues signing you in. Please try it again!",
+	"We had issues signing you in. Please check your inputs and try it again!",
 	"We had issues parsing your URL. Please try it again!",
 	"We had issues storing your changes. Please try it again!",
 }

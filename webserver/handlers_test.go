@@ -15,6 +15,8 @@ import (
 	"testing"
 )
 
+// TODO: In jeder Testdatei anstelle assert.NotNil(t, err) -> assert.NoError(t, err)
+
 func setup() {
 	config.DataPath = "datatest"
 	config.TemplatePath = path.Join("..", "templates")
@@ -224,7 +226,7 @@ func TestServeUserRegistrationSuccess(t *testing.T) {
 	assert.Equal(t, "/", resultURL.Path)
 }
 
-func TestServeSignInShowTemplate(t *testing.T) {
+func TestServeAuthenticationShowTemplate(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -235,7 +237,7 @@ func TestServeSignInShowTemplate(t *testing.T) {
 	req.Form = form
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(ServeSignIn)
+	handler := http.HandlerFunc(ServeAuthentication)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, rr.Code, http.StatusOK)
@@ -256,7 +258,7 @@ func createUser(username, password string) {
 	handler.ServeHTTP(rr, req)
 }
 
-func TestServeSignInInvalidCredentials(t *testing.T) {
+func TestServeAuthenticationInvalidCredentials(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -269,7 +271,7 @@ func TestServeSignInInvalidCredentials(t *testing.T) {
 	req.Form = form
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(ServeSignIn)
+	handler := http.HandlerFunc(ServeAuthentication)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, rr.Code, http.StatusFound)
@@ -278,7 +280,7 @@ func TestServeSignInInvalidCredentials(t *testing.T) {
 	assert.Equal(t, utils.ErrorUserLogin.ErrorPageURL(), resultURL.Path)
 }
 
-func TestServeSignInSuccessWithHomeRedirect(t *testing.T) {
+func TestServeAuthenticationSuccessWithHomeRedirect(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -293,7 +295,7 @@ func TestServeSignInSuccessWithHomeRedirect(t *testing.T) {
 	req.Form = form
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(ServeSignIn)
+	handler := http.HandlerFunc(ServeAuthentication)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, rr.Code, http.StatusFound)
@@ -302,7 +304,7 @@ func TestServeSignInSuccessWithHomeRedirect(t *testing.T) {
 	assert.Equal(t, "/", resultURL.Path)
 }
 
-func TestServeSignInSuccessWithRequestedURLRedirect(t *testing.T) {
+func TestServeAuthenticationSuccessWithRequestedURLRedirect(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -325,7 +327,7 @@ func TestServeSignInSuccessWithRequestedURLRedirect(t *testing.T) {
 	})
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(ServeSignIn)
+	handler := http.HandlerFunc(ServeAuthentication)
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, rr.Code, http.StatusFound)

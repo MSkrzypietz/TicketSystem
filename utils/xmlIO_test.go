@@ -363,24 +363,22 @@ func TestCheckUser(t *testing.T) {
 	assert.True(t, tmpBool)
 }
 
-func TestVerifyUser(t *testing.T) {
+func TestVerifySessionCookie(t *testing.T) {
 	setup()
 	defer teardown()
 
 	config.DataPath = "wrongPath"
-	_, err := VerifyUser("", "")
+	err := VerifySessionCookie("", "")
 	assert.NotNil(t, err)
 
 	config.DataPath = "datatest"
 	user, err := CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
 
-	tmpBool, err := VerifyUser(user.Username, user.Password)
-	assert.True(t, tmpBool)
+	err = VerifySessionCookie(user.Username, user.Password)
 	assert.Nil(t, err)
 
-	tmpBool, err = VerifyUser(user.Username, "xxx")
-	assert.False(t, tmpBool)
+	err = VerifySessionCookie(user.Username, "xxx")
 	assert.NotNil(t, err)
 }
 
