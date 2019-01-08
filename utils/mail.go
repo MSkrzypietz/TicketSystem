@@ -3,15 +3,19 @@ package utils
 import (
 	"TicketSystem/config"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
+	"time"
 )
 
 //struct for mails
 type Mail struct {
-	Mail    string `xml:"Mail"`
-	Caption string `xml:"Caption"`
-	Message string `xml:"Message"`
-	MailId  int    `xml:"MailId"`
+	Mail               string    `xml:"Mail"`
+	Caption            string    `xml:"Caption"`
+	Message            string    `xml:"Message"`
+	MailId             int       `xml:"MailId"`
+	ReadAttemptCounter int       `xml:"ReadAttempt"`
+	LastAttemptDate    time.Time `xml:"LastAttemptDate"`
 }
 
 type Maillist struct {
@@ -93,4 +97,19 @@ func ReadMailsFile() (Maillist, error) {
 		return Maillist{}, err
 	}
 	return maillist, nil
+}
+
+func (m Mail) IncrementReadAttemptsCounter() error {
+	maillist, err := ReadMailsFile()
+	if err != nil {
+		return err
+	}
+	for _, mail := range maillist.Maillist {
+		if mail.MailId == m.MailId {
+			mail.ReadAttemptCounter = mail.ReadAttemptCounter + 1
+			mail.LastAttemptDate = time.Now()
+			return WriteToXML(maillist, config.MailFilePath())
+		}
+	}
+	return fmt.Errorf("couldn't find the email")
 }

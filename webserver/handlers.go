@@ -4,6 +4,7 @@ import (
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"encoding/xml"
+	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -345,6 +346,13 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		utils.RespondWithError(w, http.StatusMethodNotAllowed, "We had issues fetching the E-Mails!")
 		return
+	}
+
+	for _, mail := range rawMails.Maillist {
+		err := mail.IncrementReadAttemptsCounter()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true, Data: rawMails.Maillist})

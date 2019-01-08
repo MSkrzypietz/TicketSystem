@@ -22,7 +22,6 @@ type templateContext struct {
 
 var templates *template.Template
 
-// TODO: Try replacing this with init()
 func Setup() {
 	err := utils.InitDataStorage()
 	if err != nil {
