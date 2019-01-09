@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// TODO: Perhaps add ,omitempty to xml definitions
 //struct that defines a ticket with the parameters ID, mail of the client, reference, actual status, editor and a list of all messages
 type Ticket struct {
 	XMLName     xml.Name  `xml:"Ticket"`
