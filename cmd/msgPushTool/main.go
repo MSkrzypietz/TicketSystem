@@ -35,7 +35,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if response.Success {
+	if response.Meta.Code == http.StatusOK {
 		fmt.Println("Successfully received the email with the following content:")
 		fmt.Printf("\tE-Mail: %s\n", mail.Mail)
 		fmt.Printf("\tSubject: %s\n", mail.Caption)

@@ -370,11 +370,11 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 // Checks depending on the LastReadAttemptDate if the ReadAttemptCounter is tolerable to prevent email ping pong
 func preventMailPingPong(mail utils.Mail) bool {
 	minsSinceLastReadAttempt := time.Since(mail.LastReadAttemptDate).Minutes()
-	return (mail.ReadAttemptCounter == 3 && minsSinceLastReadAttempt < 1) ||
-		(mail.ReadAttemptCounter == 5 && minsSinceLastReadAttempt < 5) ||
-		(mail.ReadAttemptCounter == 10 && minsSinceLastReadAttempt < 60) ||
-		(mail.ReadAttemptCounter == 25 && minsSinceLastReadAttempt < 120) ||
-		(mail.ReadAttemptCounter == 50 && minsSinceLastReadAttempt < 240)
+	return (mail.ReadAttemptCounter > 0 && mail.ReadAttemptCounter <= 3 && minsSinceLastReadAttempt < 1) ||
+		(mail.ReadAttemptCounter <= 5 && minsSinceLastReadAttempt < 5) ||
+		(mail.ReadAttemptCounter <= 10 && minsSinceLastReadAttempt < 60) ||
+		(mail.ReadAttemptCounter <= 25 && minsSinceLastReadAttempt < 120) ||
+		(mail.ReadAttemptCounter <= 50 && minsSinceLastReadAttempt < 240)
 }
 
 func postMails(w http.ResponseWriter, r *http.Request) {

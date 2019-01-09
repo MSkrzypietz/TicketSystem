@@ -30,9 +30,8 @@ func main() {
 
 	for _, mail := range mails.Data {
 		fmt.Println()
-		fmt.Printf("ID: %d\n", mail.MailId)
-		fmt.Printf("E-Mail: %s\n", mail.Mail)
-		fmt.Printf("Subject: %s\n", mail.Caption)
+		fmt.Printf("E-Mail: %s\n", mail.EMailAddress)
+		fmt.Printf("Subject: %s\n", mail.Subject)
 		fmt.Printf("Message: %s\n", mail.Message)
 	}
 }
