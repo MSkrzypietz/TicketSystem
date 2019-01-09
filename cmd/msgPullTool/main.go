@@ -22,7 +22,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("There are %d E-Mails to be sent:\n", len(mails.Data))
+	if len(mails.Data) == 1 {
+		fmt.Printf("There is %d E-Mail to be sent:\n", len(mails.Data))
+	} else {
+		fmt.Printf("There are %d E-Mails to be sent:\n", len(mails.Data))
+	}
+
 	for _, mail := range mails.Data {
 		fmt.Println()
 		fmt.Printf("ID: %d\n", mail.MailId)
