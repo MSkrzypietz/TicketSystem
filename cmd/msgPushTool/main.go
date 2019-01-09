@@ -8,7 +8,6 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -46,13 +45,13 @@ func main() {
 		subject := readInput(reader, "subject", hasText)
 		message := readInput(reader, "message", hasText)
 
-		if ok, email := pushEmail(*url, emailAddress, subject, message); ok {
+		if email, err := pushEmail(*url, emailAddress, subject, message); err == nil {
 			fmt.Println("Successfully pushed the email with the following content:")
 			fmt.Printf("\tE-Mail: %s\n", email.EMailAddress)
 			fmt.Printf("\tSubject: %s\n", email.Subject)
-			fmt.Printf("\tMessage: %s\n", email.Message)
+			fmt.Printf("\tMessage: %s\n\n", email.Message)
 		} else {
-			fmt.Println("We were not able to push your email. Please try it again!")
+			fmt.Printf("We encountered the error '%v'. Please try it again!\n", err)
 		}
 	}
 }
@@ -75,11 +74,11 @@ func readInput(reader *bufio.Reader, name string, checkInput func(string) bool) 
 	}
 }
 
-func pushEmail(url, emailAddress, subject, message string) (bool, utils.MailData) {
+func pushEmail(url, emailAddress, subject, message string) (utils.MailData, error) {
 	req := utils.Request{Mail: utils.MailData{EMailAddress: emailAddress, Subject: subject, Message: message}}
 	buf, err := xml.Marshal(req)
 	if err != nil {
-		log.Fatal(err)
+		return utils.MailData{}, err
 	}
 
 	// ignoring invalid certificate
@@ -87,14 +86,11 @@ func pushEmail(url, emailAddress, subject, message string) (bool, utils.MailData
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	res, err := client.Post(
-		url+"/mails",
-		"application/xml",
-		bytes.NewBuffer(buf))
-
+	res, err := client.Post(url+"/mails", "application/xml", bytes.NewBuffer(buf))
 	if err != nil {
-		fmt.Println(err)
+		return utils.MailData{}, err
 	}
+	defer res.Body.Close()
 
-	return res.StatusCode == http.StatusOK, req.Mail
+	return req.Mail, nil
 }
