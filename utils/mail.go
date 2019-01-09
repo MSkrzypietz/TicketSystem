@@ -104,10 +104,11 @@ func (m Mail) IncrementReadAttemptsCounter() error {
 	if err != nil {
 		return err
 	}
-	for _, mail := range maillist.Maillist {
+
+	for i, mail := range maillist.Maillist {
 		if mail.MailId == m.MailId {
-			mail.ReadAttemptCounter = mail.ReadAttemptCounter + 1
-			mail.LastAttemptDate = time.Now()
+			maillist.Maillist[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
+			maillist.Maillist[i].LastAttemptDate = time.Now()
 			return WriteToXML(maillist, config.MailFilePath())
 		}
 	}
