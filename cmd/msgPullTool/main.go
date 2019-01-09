@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	// TODO: Replace with actual Get Request
 	req := httptest.NewRequest(http.MethodGet, "/mails", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(webserver.ServeMailsAPI)

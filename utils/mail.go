@@ -28,7 +28,7 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 	tickets := GetTicketsByClient(mail)
 
 	for _, actTicket := range tickets {
-		if CheckStringsDeviation(3, actTicket.Reference, reference) {
+		if CheckStringsDeviation(2, actTicket.Reference, reference) {
 			newTicket, err := AddMessage(actTicket, mail, message)
 			if err != nil {
 				return newTicket, err
