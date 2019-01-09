@@ -8,24 +8,30 @@ import (
 
 // this file is inspired by https://itnext.io/building-restful-web-api-service-using-golang-chi-mysql-d85f427dee54
 
-type RestError struct {
-	Code int
-	Msg  string
+type Request struct {
+	Mail    MailData `xml:"mail,omitempty"`
+	MailIDs []int    `xml:"mails>mailID,omitempty"`
 }
 
 type Response struct {
-	Success bool      `xml:"success"`
-	Data    []Mail    `xml:"data>mails>mail"`
-	Err     RestError `xml:"error"`
+	Meta MetaData   `xml:"meta"`
+	Data []MailData `xml:"data,omitempty>mails>mail"`
 }
 
-type MailIDs struct {
-	IDList []int `xml:"MailID"`
+type MetaData struct {
+	Code    int    `xml:"code"`
+	Message string `xml:"message"`
+}
+
+type MailData struct {
+	EMailAddress string `xml:"emailAddress"`
+	Subject      string `xml:"subject"`
+	Message      string `xml:"message"`
 }
 
 // returns error message
 func RespondWithError(w http.ResponseWriter, code int, msg string) {
-	RespondWithXML(w, code, Response{Success: false, Err: RestError{Code: code, Msg: msg}})
+	RespondWithXML(w, code, Response{Meta: MetaData{Code: code, Message: msg}})
 }
 
 // writes xml response

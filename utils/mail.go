@@ -10,12 +10,12 @@ import (
 
 //struct for mails
 type Mail struct {
-	Mail               string    `xml:"Mail"`
-	Caption            string    `xml:"Caption"`
-	Message            string    `xml:"Message"`
-	MailId             int       `xml:"MailId"`
-	ReadAttemptCounter int       `xml:"ReadAttempt"`
-	LastAttemptDate    time.Time `xml:"LastAttemptDate"`
+	Mail                string    `xml:"Mail"`
+	Caption             string    `xml:"Caption"`
+	Message             string    `xml:"Message"`
+	MailId              int       `xml:"MailId"`
+	ReadAttemptCounter  int       `xml:"ReadAttempt"`
+	LastReadAttemptDate time.Time `xml:"LastAttemptDate"`
 }
 
 type Maillist struct {
@@ -108,7 +108,7 @@ func (m Mail) IncrementReadAttemptsCounter() error {
 	for i, mail := range maillist.Maillist {
 		if mail.MailId == m.MailId {
 			maillist.Maillist[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
-			maillist.Maillist[i].LastAttemptDate = time.Now()
+			maillist.Maillist[i].LastReadAttemptDate = time.Now()
 			return WriteToXML(maillist, config.MailFilePath())
 		}
 	}

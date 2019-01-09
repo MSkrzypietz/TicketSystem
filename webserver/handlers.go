@@ -4,7 +4,6 @@ import (
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"encoding/xml"
-	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -348,49 +347,61 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
+	var mails []utils.MailData
 	for _, mail := range rawMails.Maillist {
+		//if time.Since(mail.LastReadAttemptDate).Minutes() &&
+
 		err := mail.IncrementReadAttemptsCounter()
 		if err != nil {
-			log.Println(err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "We had internal issues fetching the data for you. Please try it again!")
+			return
+		} else {
+			mail := utils.MailData{EMailAddress: mail.Mail, Subject: mail.Caption, Message: mail.Message}
+			mails = append(mails, mail)
 		}
 	}
 
-	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true, Data: rawMails.Maillist})
+	utils.RespondWithXML(w, http.StatusOK, utils.Response{Meta: utils.MetaData{Code: http.StatusOK, Message: "OK"}, Data: mails})
 }
 
 func postMails(w http.ResponseWriter, r *http.Request) {
-	var mail utils.Mail
-	err := xml.NewDecoder(r.Body).Decode(&mail)
+	// Using MailData to ensure only accepting the address, subject and message
+	var request utils.Request
+	err := xml.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
+		return
 	}
 
-	_, err = utils.CreateTicketFromMail(mail.Mail, mail.Caption, mail.Message)
+	_, err = utils.CreateTicketFromMail(request.Mail.EMailAddress, request.Mail.Subject, request.Mail.Message)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "We had issues storing your sent E-Mails!")
 		return
 	}
 
-	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true})
+	utils.RespondWithXML(w, http.StatusOK, utils.Response{Meta: utils.MetaData{Code: http.StatusOK, Message: "OK"}})
 }
 
 func ServeMailsSentNotification(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.RespondWithError(w, http.StatusMethodNotAllowed, "This REST API only responds to POST requests!")
+		return
 	}
 
-	var mails utils.MailIDs
-	err := xml.NewDecoder(r.Body).Decode(&mails)
+	var request utils.Request
+	err := xml.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
+		return
 	}
 
-	err = utils.DeleteMails(mails.IDList)
+	err = utils.DeleteMails(request.MailIDs)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "We ran into issues processing your request. Please try it again.")
+		return
 	}
 
-	utils.RespondWithXML(w, http.StatusOK, utils.Response{Success: true})
+	utils.RespondWithXML(w, http.StatusOK, utils.Response{Meta: utils.MetaData{Code: http.StatusOK, Message: "OK"}})
 }
 
 func executeTemplate(w http.ResponseWriter, r *http.Request, name string, ctx templateContext) {
