@@ -29,17 +29,21 @@ type MailData struct {
 	Message      string `xml:"message"`
 }
 
-// returns error message
+// Writes xml error reponse
 func RespondWithError(w http.ResponseWriter, code int, msg string) {
 	RespondWithXML(w, code, Response{Meta: MetaData{Code: code, Message: msg}})
 }
 
-// writes xml response
+// Writes xml response
 func RespondWithXML(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := xml.Marshal(payload)
+	response, err := xml.Marshal(payload)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Couldn't marshal the response payload")
+		return
+	}
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(code)
-	_, err := w.Write(response)
+	_, err = w.Write(response)
 	if err != nil {
 		log.Println(err)
 	}
