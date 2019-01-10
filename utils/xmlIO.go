@@ -41,9 +41,10 @@ var ticketMap = make(map[int]Ticket)
 
 //struct for one user
 type User struct {
-	Username  string `xml:"Username"`
-	Password  string `xml:"Password"`
-	SessionID string `xml:"SessionID"`
+	Username    string `xml:"Username"`
+	Password    string `xml:"Password"`
+	SessionID   string `xml:"SessionID"`
+	HolidayMode bool   `xml:"HolidayMode"`
 }
 
 type Userlist struct {
@@ -321,7 +322,7 @@ func CreateUser(name string, password string) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
-	usersMap[name] = User{Username: name, Password: string(hash), SessionID: ""}
+	usersMap[name] = User{Username: name, Password: string(hash), SessionID: "", HolidayMode: false}
 	err = storeUsers(usersMap)
 	if err != nil {
 		return User{}, err
@@ -432,4 +433,20 @@ func GetUserBySession(session string) (User, error) {
 		}
 	}
 	return User{}, fmt.Errorf("user does not exist")
+}
+
+//sets the holiday mode of the specified user
+func SetUserHolidayMode(name string, holidayMode bool) error {
+	tmpUsers, err := ReadUsers()
+	if err != nil {
+		return err
+	}
+	user := tmpUsers[name]
+	if user.Username == "" {
+		return fmt.Errorf("user does not exist")
+	}
+	user.HolidayMode = holidayMode
+	tmpUsers[name] = user
+	err = storeUsers(tmpUsers)
+	return err
 }

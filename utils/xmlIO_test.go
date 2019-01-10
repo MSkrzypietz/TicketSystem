@@ -446,3 +446,20 @@ func TestGetUserBySession(t *testing.T) {
 	_, err = GetUserBySession("FalscheSession")
 	assert.NotNil(t, err)
 }
+
+func TestSetUserHolidayMode(t *testing.T) {
+	setup()
+	defer teardown()
+
+	config.DataPath = "wrongPath"
+	assert.NotNil(t, SetUserHolidayMode("testUser", true))
+	config.DataPath = "datatest"
+	assert.NotNil(t, SetUserHolidayMode("testUser", true))
+	CreateUser("testUser", "test")
+	assert.Nil(t, SetUserHolidayMode("testUser", true))
+	tmpUsers, _ := ReadUsers()
+	assert.True(t, tmpUsers["testUser"].HolidayMode)
+	assert.Nil(t, SetUserHolidayMode("testUser", false))
+	tmpUsers, _ = ReadUsers()
+	assert.False(t, tmpUsers["testUser"].HolidayMode)
+}
