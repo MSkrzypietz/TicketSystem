@@ -39,6 +39,9 @@
                     $(this).text($(this).text().substr(0, 120) + '...');
                 }
             });
+            $("#holiday-switch").on("input", function() {
+                $("#holiday-form").submit()
+            })
         });
     </script>
 </body>

@@ -1,5 +1,16 @@
 {{define "tickets"}}
     <div>
+        <form action="/changeHolidayMode" method="post" id="holiday-form">
+            <div class="d-flex flex-row">
+                    <label id="holiday-switch" class="bs-switch m-0">
+                        <input type="checkbox" name="holidayMode" {{if .IsUserInHoliday}}checked{{end}}>
+                        <span class="slider round"></span>
+                    </label>
+                </a>
+                <h3 class="ml-3 my-0 align-self-center">Holiday Mode</h3>
+            </div>
+        </form>
+        <br>
         {{range .TicketsData}}
             <a href={{print "/tickets/" .Id}}>
                 <div class="card card-cascade wider reverse">

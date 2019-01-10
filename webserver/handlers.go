@@ -363,6 +363,24 @@ func ServeMergeTickets(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusMovedPermanently)
 }
 
+func ServeChangeHolidayMode(w http.ResponseWriter, r *http.Request) {
+	parseForm(w, r)
+
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	err = utils.SetUserHolidayMode(user.Username, r.PostFormValue("holidayMode") == "on")
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusMovedPermanently)
+}
+
 func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// returns the list of mails which are to be sent
