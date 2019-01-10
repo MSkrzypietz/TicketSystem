@@ -333,10 +333,10 @@ func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/tickets/", http.StatusMovedPermanently)
 }
 
-func ServeMergeTicket(w http.ResponseWriter, r *http.Request) {
+func ServeMergeTickets(w http.ResponseWriter, r *http.Request) {
 	parseForm(w, r)
 
-	user, err := utils.GetUserFromCookie(r)
+	_, err := utils.GetUserFromCookie(r)
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
@@ -351,22 +351,6 @@ func ServeMergeTicket(w http.ResponseWriter, r *http.Request) {
 	secondID, err := strconv.Atoi(r.PostFormValue("ticket"))
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
-		return
-	}
-
-	firstTicket, err := utils.ReadTicket(firstID)
-	if err != nil {
-		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageURL(), http.StatusFound)
-		return
-	}
-	secondTicket, err := utils.ReadTicket(secondID)
-	if err != nil {
-		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageURL(), http.StatusFound)
-		return
-	}
-	// Checking if malicious user tried to merge tickets that are not his
-	if user.Username != firstTicket.Editor && user.Username != secondTicket.Editor {
-		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
 		return
 	}
 

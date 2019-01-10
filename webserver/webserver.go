@@ -46,7 +46,7 @@ func StartServer() {
 	http.HandleFunc("/assignTicket", authenticate(ServeTicketAssignment))
 	http.HandleFunc("/releaseTicket", authenticate(ServeTicketRelease))
 	http.HandleFunc("/closeTicket", authenticate(ServeCloseTicket))
-	http.HandleFunc("/mergeTickets", authenticate(ServeMergeTicket))
+	http.HandleFunc("/mergeTickets", authenticate(ServeMergeTickets))
 	http.HandleFunc("/mails", ServeMailsAPI)
 	http.HandleFunc("/mails/notify", ServeMailsSentNotification)
 

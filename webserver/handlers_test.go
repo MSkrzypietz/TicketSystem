@@ -1132,6 +1132,182 @@ func TestServeCloseTicketSuccess(t *testing.T) {
 	assert.Equal(t, "/tickets/", resultURL.Path)
 }
 
+func TestServeMergeTicketsUnauthorized(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMergeTickets)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorUnauthorized.ErrorPageURL(), resultURL.Path)
+}
+
+func TestServeMergeTicketsInvalidURL(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/MyTicket")
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeMergeTickets)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
+}
+
+func TestServeMergeTicketsInvalidPostParam(t *testing.T) {
+	setup()
+	defer teardown()
+
+	firstTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+	err = utils.ChangeEditor(firstTicket.Id, "Test")
+	assert.Nil(t, err)
+	secondTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+	err = utils.ChangeEditor(secondTicket.Id, "Test2")
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("ticket", "wrongID")
+
+	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeMergeTickets)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorURLParsing.ErrorPageURL(), resultURL.Path)
+}
+
+func TestServeMergeTicketsInvalidTickets(t *testing.T) {
+	setup()
+	defer teardown()
+
+	firstTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+	err = utils.ChangeEditor(firstTicket.Id, "Test")
+	assert.Nil(t, err)
+	secondTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+	err = utils.ChangeEditor(secondTicket.Id, "Test2") // wrong editor
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("ticket", strconv.Itoa(secondTicket.Id))
+
+	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeMergeTickets)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorDataStoring.ErrorPageURL(), resultURL.Path)
+}
+
+func TestServeMergeTicketsSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	firstTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+	err = utils.ChangeEditor(firstTicket.Id, "Test")
+	assert.Nil(t, err)
+	secondTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+	err = utils.ChangeEditor(secondTicket.Id, "Test")
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("ticket", strconv.Itoa(secondTicket.Id))
+
+	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeMergeTickets)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusMovedPermanently)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, req.Referer(), resultURL.Path)
+}
+
 func TestPreventEMailPingPong(t *testing.T) {
 	tests := []struct {
 		mail     utils.Mail
