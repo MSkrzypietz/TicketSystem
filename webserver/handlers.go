@@ -135,7 +135,7 @@ func ServeAuthentication(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, utils.ErrorUserLogin.ErrorPageURL(), http.StatusFound)
 		return
 	}
-	CreateSessionCookie(w, uuid)
+	createSessionCookie(w, uuid)
 
 	// This will redirect the user to his original destination if he was forced to authorize
 	url, err := r.Cookie("requested-url-while-not-authenticated")
@@ -148,7 +148,7 @@ func ServeAuthentication(w http.ResponseWriter, r *http.Request) {
 
 func ServeSignOut(w http.ResponseWriter, r *http.Request) {
 	// Destroying user specific cookies
-	DestroySession(w)
+	destroySession(w)
 	http.SetCookie(w, &http.Cookie{
 		Name:   "requested-url-while-not-authenticated",
 		Value:  "",

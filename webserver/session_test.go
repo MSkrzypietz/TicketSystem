@@ -8,7 +8,7 @@ import (
 
 func TestCreateSessionCookie(t *testing.T) {
 	rr := httptest.NewRecorder()
-	CreateSessionCookie(rr, "TestID")
+	createSessionCookie(rr, "TestID")
 
 	assert.Equal(t, 1, len(rr.Result().Cookies()))
 	assert.Equal(t, "TestID", rr.Result().Cookies()[0].Value)
@@ -16,7 +16,7 @@ func TestCreateSessionCookie(t *testing.T) {
 
 func TestDestroySession(t *testing.T) {
 	rr := httptest.NewRecorder()
-	DestroySession(rr)
+	destroySession(rr)
 
 	assert.Equal(t, 1, len(rr.Result().Cookies()))
 	assert.Equal(t, "session-id", rr.Result().Cookies()[0].Name)

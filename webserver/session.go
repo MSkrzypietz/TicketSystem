@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func CreateSessionCookie(w http.ResponseWriter, id string) {
+func createSessionCookie(w http.ResponseWriter, id string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",
 		Value:    id,
@@ -15,6 +15,6 @@ func CreateSessionCookie(w http.ResponseWriter, id string) {
 	})
 }
 
-func DestroySession(w http.ResponseWriter) {
+func destroySession(w http.ResponseWriter) {
 	utils.RemoveCookie(w, "session-id")
 }

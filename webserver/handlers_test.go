@@ -440,7 +440,7 @@ func TestServeAddCommentInvalidInput(t *testing.T) {
 
 func loginUser(rr *httptest.ResponseRecorder, username, password, uuid string) error {
 	err := utils.LoginUser(username, password, uuid)
-	CreateSessionCookie(rr, uuid)
+	createSessionCookie(rr, uuid)
 	return err
 }
 
