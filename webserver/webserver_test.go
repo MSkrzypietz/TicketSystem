@@ -1,12 +1,21 @@
 package webserver
 
 import (
+	"TicketSystem/config"
 	"TicketSystem/utils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+func TestStartServerPanic(t *testing.T) {
+	setup()
+	defer teardown()
+
+	config.ServerCertPath = "wrongPath"
+	assert.Panics(t, StartServer)
+}
 
 func TestAuthenticateWithoutCookie(t *testing.T) {
 	setup()
@@ -60,4 +69,32 @@ func TestAuthenticateWithCookieButInvalidSession(t *testing.T) {
 	location, err := rr.Result().Location()
 	assert.Nil(t, err)
 	assert.Equal(t, "/signIn", location.Path)
+}
+
+func TestAuthenticateSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	username := "Test123"
+	password := "Aa!123456"
+	uuid := utils.CreateUUID(64)
+
+	createUser(username, password)
+	err := utils.LoginUser(username, password, uuid)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/tickets/", nil)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60,
+	})
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authenticate(ServeTickets))
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
 }
