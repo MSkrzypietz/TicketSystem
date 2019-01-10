@@ -81,7 +81,7 @@ func pushEmail(url, emailAddress, subject, message string) (utils.MailData, erro
 		return utils.MailData{}, err
 	}
 
-	// ignoring invalid certificate
+	// Ignoring unauthorized certificate
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}

@@ -3,6 +3,8 @@ package webserver
 import (
 	"TicketSystem/config"
 	"TicketSystem/utils"
+	"bytes"
+	"encoding/xml"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"net/http"
@@ -1147,4 +1149,222 @@ func TestPreventEMailPingPong(t *testing.T) {
 	for _, d := range tests {
 		assert.Equal(t, d.expected, preventEMailPingPong(d.mail))
 	}
+}
+
+func TestGetMailsFileReadError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	config.DataPath = "wrongPath"
+
+	req := httptest.NewRequest(http.MethodGet, "/mails", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(getMails)
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	config.DataPath = "datatest"
+}
+
+func TestGetMailsSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	emailAddress := "test@gmail.com"
+	subject := "Test Subject"
+	message := "Test Message"
+	err := utils.SendMail(emailAddress, subject, message)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/mails", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(getMails)
+
+	for i := 0; i < 4; i++ {
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var mails utils.Response
+		err = xml.NewDecoder(rr.Body).Decode(&mails)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(mails.Data))
+	}
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var mails utils.Response
+	err = xml.NewDecoder(rr.Body).Decode(&mails)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(mails.Data)) // EMail ping pong prevention strikes
+}
+
+func TestPostMailsInvalidPayload(t *testing.T) {
+	setup()
+	defer teardown()
+
+	payload := `<Invalid Payload`
+
+	req := httptest.NewRequest(http.MethodPost, "/mails", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(postMails)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+}
+
+func TestPostMailsStorageFailure(t *testing.T) {
+	setup()
+	defer teardown()
+
+	config.DataPath = "wrongPath"
+
+	mailReq := utils.Request{Mail: utils.MailData{EMailAddress: "Test@gmail.com", Subject: "Test Subject", Message: "Test Message"}}
+	payload, err := xml.Marshal(mailReq)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/mails", bytes.NewBuffer(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(postMails)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+}
+
+func TestPostMailsSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mailReq := utils.Request{Mail: utils.MailData{EMailAddress: "Test@gmail.com", Subject: "Test Subject", Message: "Test Message"}}
+	payload, err := xml.Marshal(mailReq)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/mails", bytes.NewBuffer(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(postMails)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	_, err = utils.ReadTicket(1)
+	assert.Nil(t, err) // ticket exists
+}
+
+func TestServeMailsAPIInvalidHTTPMethod(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodDelete, "/mails", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsAPI)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+}
+
+func TestServeMailsAPIGetSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodGet, "/mails", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsAPI)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestServeMailsAPIPostSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mailReq := utils.Request{Mail: utils.MailData{EMailAddress: "Test@gmail.com", Subject: "Test Subject", Message: "Test Message"}}
+	payload, err := xml.Marshal(mailReq)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/mails", bytes.NewBuffer(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsAPI)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestServeMailsSentNotificationInvalidHTTPMethod(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodGet, "/mails/notify", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsSentNotification)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+}
+
+func TestServeMailsSentNotificationInvalidPayload(t *testing.T) {
+	setup()
+	defer teardown()
+
+	payload := `<Invalid Payload`
+
+	req := httptest.NewRequest(http.MethodPost, "/mails/notify", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsSentNotification)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+}
+
+func TestServeMailsSentNotificationInternalServerError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	notifyReq := utils.Request{MailIDs: []int{1}}
+	payload, err := xml.Marshal(notifyReq)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/mails/notify", bytes.NewBuffer(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsSentNotification)
+
+	config.DataPath = "wrongPath"
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	config.DataPath = "datatest"
+}
+
+func TestServeMailsSentNotificationSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	err := utils.SendMail("Test@gmail.com", "Test Subject", "Test Message")
+	assert.Nil(t, err)
+	maillist, err := utils.ReadMailsFile()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(maillist.Maillist))
+
+	notifyReq := utils.Request{MailIDs: []int{1}}
+	payload, err := xml.Marshal(notifyReq)
+	assert.Nil(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/mails/notify", bytes.NewBuffer(payload))
+	req.Header.Set("Content-Type", "application/xml")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ServeMailsSentNotification)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	maillist, err = utils.ReadMailsFile()
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(maillist.Maillist))
 }

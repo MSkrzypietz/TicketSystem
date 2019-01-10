@@ -344,7 +344,7 @@ func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
 func getMails(w http.ResponseWriter, _ *http.Request) {
 	rawMails, err := utils.ReadMailsFile()
 	if err != nil {
-		utils.RespondWithError(w, http.StatusMethodNotAllowed, "We had issues fetching the E-Mails!")
+		utils.RespondWithError(w, http.StatusInternalServerError, "We had issues fetching the E-Mails!")
 		return
 	}
 

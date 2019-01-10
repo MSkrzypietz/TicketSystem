@@ -54,7 +54,7 @@ func main() {
 }
 
 func pullEmails(url string) ([]utils.MailData, error) {
-	// ignoring invalid certificate
+	// Ignoring unauthorized certificate
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
