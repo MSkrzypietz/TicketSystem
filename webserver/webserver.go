@@ -18,6 +18,7 @@ type templateContext struct {
 	Username        string
 	Users           []string
 	TicketsData     []utils.Ticket
+	CurrentTicket   utils.Ticket
 }
 
 var templates *template.Template
@@ -45,6 +46,7 @@ func StartServer() {
 	http.HandleFunc("/assignTicket", authenticate(ServeTicketAssignment))
 	http.HandleFunc("/releaseTicket", authenticate(ServeTicketRelease))
 	http.HandleFunc("/closeTicket", authenticate(ServeCloseTicket))
+	http.HandleFunc("/mergeTickets", authenticate(ServeMergeTicket))
 	http.HandleFunc("/mails", ServeMailsAPI)
 	http.HandleFunc("/mails/notify", ServeMailsSentNotification)
 

@@ -164,6 +164,8 @@ func TestServeUserRegistrationInvalidUsername(t *testing.T) {
 	setup()
 	defer teardown()
 
+	config.DebugMode = false
+
 	form := url.Values{}
 	form.Add("username", "Tes")
 	form.Add("password1", "12345")
@@ -186,6 +188,8 @@ func TestServeUserRegistrationInvalidUsername(t *testing.T) {
 func TestServeUserRegistrationInvalidPassword(t *testing.T) {
 	setup()
 	defer teardown()
+
+	config.DebugMode = false
 
 	form := url.Values{}
 	form.Add("username", "Test123")

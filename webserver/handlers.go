@@ -45,7 +45,15 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		usersList = append(usersList, v.Username)
 	}
 
-	ctx := templateContext{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: []utils.Ticket{ticket}}
+	// TicketsData is used to display all possible tickets that can be merged, hence the current ticket gets removed
+	ticketsData := utils.GetTicketsByEditor(user.Username)
+	for i, t := range ticketsData {
+		if t.Id == ticket.Id {
+			ticketsData[i] = ticketsData[len(ticketsData)-1] // Replacing it with the last ticket
+			ticketsData = ticketsData[:len(ticketsData)-1]   // Removing the last ticket
+		}
+	}
+	ctx := templateContext{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: ticketsData, CurrentTicket: ticket}
 	executeTemplate(w, r, "index.html", ctx)
 }
 
@@ -104,7 +112,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password1")
 
 	// DebugMode removes annoying checks when testing
-	if !config.DebugMode || (!utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password)) {
+	if !config.DebugMode && (!utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password)) {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
@@ -323,6 +331,52 @@ func ServeCloseTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/tickets/", http.StatusMovedPermanently)
+}
+
+func ServeMergeTicket(w http.ResponseWriter, r *http.Request) {
+	parseForm(w, r)
+
+	user, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	firstID, err := strconv.Atoi(path.Base(r.Referer()))
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	secondID, err := strconv.Atoi(r.PostFormValue("ticket"))
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorURLParsing.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	firstTicket, err := utils.ReadTicket(firstID)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageURL(), http.StatusFound)
+		return
+	}
+	secondTicket, err := utils.ReadTicket(secondID)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorInvalidTicketID.ErrorPageURL(), http.StatusFound)
+		return
+	}
+	// Checking if malicious user tried to merge tickets that are not his
+	if user.Username != firstTicket.Editor && user.Username != secondTicket.Editor {
+		http.Redirect(w, r, utils.ErrorUnauthorized.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	err = utils.MergeTickets(firstID, secondID)
+	if err != nil {
+		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusMovedPermanently)
 }
 
 func ServeMailsAPI(w http.ResponseWriter, r *http.Request) {
