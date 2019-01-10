@@ -100,7 +100,7 @@ func ReadMailsFile() (Maillist, error) {
 	return maillist, nil
 }
 
-func (m Mail) IncrementReadAttemptsCounter() error {
+func (m *Mail) IncrementReadAttemptsCounter() error {
 	maillist, err := ReadMailsFile()
 	if err != nil {
 		return err
@@ -109,8 +109,10 @@ func (m Mail) IncrementReadAttemptsCounter() error {
 	for i, mail := range maillist.Maillist {
 		if mail.MailId == m.MailId {
 			maillist.Maillist[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
+			m.ReadAttemptCounter = maillist.Maillist[i].ReadAttemptCounter
 			if maillist.Maillist[i].ReadAttemptCounter == 1 {
 				maillist.Maillist[i].FirstReadAttemptDate = time.Now()
+				m.FirstReadAttemptDate = maillist.Maillist[i].FirstReadAttemptDate
 			}
 			return WriteToXML(maillist, config.MailFilePath())
 		}

@@ -94,3 +94,24 @@ func TestReadMailsFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expectedMaillist, actMaillist)
 }
+
+func TestIncrementReadAttemptsCounter(t *testing.T) {
+	setup()
+	defer teardown()
+
+	config.DataPath = "wrongPath"
+	err := (&Mail{}).IncrementReadAttemptsCounter()
+	assert.NotNil(t, err)
+	config.DataPath = "datatest"
+
+	testMail := Mail{Mail: "test@test", Caption: "testOne", Message: "testOne", MailId: 1}
+	err = testMail.IncrementReadAttemptsCounter()
+	assert.NotNil(t, err)
+
+	maillist := Maillist{1, []Mail{testMail}}
+	err = WriteToXML(maillist, config.MailFilePath())
+	assert.Nil(t, err)
+	err = testMail.IncrementReadAttemptsCounter()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, testMail.ReadAttemptCounter)
+}
