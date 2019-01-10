@@ -10,7 +10,7 @@ func CheckStringsDeviation(allowedDeviation int, a, b string) bool {
 func levenshteinDistance(a string, len_a int, b string, len_b int) int {
 	var cost int
 
-	// base case: empty strings
+	// Base case: empty strings
 	if len_a == 0 {
 		return len_b
 	}
@@ -18,14 +18,14 @@ func levenshteinDistance(a string, len_a int, b string, len_b int) int {
 		return len_a
 	}
 
-	// test if last characters of the strings match
+	// Test if last characters of the strings match
 	if a[len_a-1] == b[len_b-1] {
 		cost = 0
 	} else {
 		cost = 1
 	}
 
-	// return minimum of delete char from s, delete char from t, and delete char from both
+	// Return minimum of delete char from s, delete char from t, and delete char from both
 	return minimum(
 		levenshteinDistance(a, len_a-1, b, len_b)+1,
 		levenshteinDistance(a, len_a, b, len_b-1)+1,
