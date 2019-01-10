@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TODO: In jeder Testdatei anstelle assert.NotNil(t, err) -> assert.NoError(t, err)
@@ -1123,4 +1124,27 @@ func TestServeCloseTicketSuccess(t *testing.T) {
 	resultURL, err := rr.Result().Location()
 	assert.Nil(t, err)
 	assert.Equal(t, "/tickets/", resultURL.Path)
+}
+
+func TestPreventEMailPingPong(t *testing.T) {
+	tests := []struct {
+		mail     utils.Mail
+		expected bool
+	}{
+		{utils.Mail{ReadAttemptCounter: 0, FirstReadAttemptDate: time.Now().Add(-30 * time.Second)}, false},
+		{utils.Mail{ReadAttemptCounter: 3, FirstReadAttemptDate: time.Now().Add(-5 * time.Second)}, false},
+		{utils.Mail{ReadAttemptCounter: 4, FirstReadAttemptDate: time.Now().Add(-3 * time.Minute)}, true},
+		{utils.Mail{ReadAttemptCounter: 4, FirstReadAttemptDate: time.Now().Add(-6 * time.Minute)}, false},
+		{utils.Mail{ReadAttemptCounter: 6, FirstReadAttemptDate: time.Now().Add(-10 * time.Minute)}, true},
+		{utils.Mail{ReadAttemptCounter: 6, FirstReadAttemptDate: time.Now().Add(-15 * time.Minute)}, false},
+		{utils.Mail{ReadAttemptCounter: 9, FirstReadAttemptDate: time.Now().Add(-25 * time.Minute)}, true},
+		{utils.Mail{ReadAttemptCounter: 9, FirstReadAttemptDate: time.Now().Add(-29 * time.Minute)}, false},
+		{utils.Mail{ReadAttemptCounter: 15, FirstReadAttemptDate: time.Now().Add(-60 * time.Minute)}, true},
+		{utils.Mail{ReadAttemptCounter: 15, FirstReadAttemptDate: time.Now().Add(-80 * time.Minute)}, false},
+		{utils.Mail{ReadAttemptCounter: 20, FirstReadAttemptDate: time.Now().Add(-120 * time.Minute)}, true},
+		{utils.Mail{ReadAttemptCounter: 20, FirstReadAttemptDate: time.Now().Add(-160 * time.Minute)}, false},
+	}
+	for _, d := range tests {
+		assert.Equal(t, d.expected, preventEMailPingPong(d.mail))
+	}
 }

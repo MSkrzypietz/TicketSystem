@@ -350,7 +350,7 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 
 	var mails []utils.MailData
 	for _, mail := range rawMails.Maillist {
-		if mail.ReadAttemptCounter > 0 && !preventMailPingPong(mail) {
+		if preventEMailPingPong(mail) {
 			continue
 		}
 
@@ -367,15 +367,23 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 	utils.RespondWithXML(w, http.StatusOK, utils.Response{Meta: utils.MetaData{Code: http.StatusOK, Message: "OK"}, Data: mails})
 }
 
-// Checks depending on the LastReadAttemptDate if the ReadAttemptCounter is tolerable to prevent email ping pong
-func preventMailPingPong(mail utils.Mail) bool {
-	minsSinceLastReadAttempt := time.Since(mail.LastReadAttemptDate).Minutes()
-	return (mail.ReadAttemptCounter <= 3 && minsSinceLastReadAttempt < 1) ||
-		(mail.ReadAttemptCounter <= 5 && minsSinceLastReadAttempt < 5) ||
-		(mail.ReadAttemptCounter <= 10 && minsSinceLastReadAttempt < 60) ||
-		(mail.ReadAttemptCounter <= 25 && minsSinceLastReadAttempt < 120) ||
-		(mail.ReadAttemptCounter <= 50 && minsSinceLastReadAttempt < 240) ||
-		(mail.ReadAttemptCounter > 50 && minsSinceLastReadAttempt >= 240)
+// Checks depending on the FirstReadAttemptDate if the ReadAttemptCounter is tolerable to prevent email ping pong
+func preventEMailPingPong(mail utils.Mail) bool {
+	// There are no restraints for the first 3 read attempts
+	if mail.ReadAttemptCounter < 3 {
+		return false
+	}
+
+	// The next 7 read attempts can be made in the first 30 minutes after the first read attempt
+	minsSinceFirstReadAttempt := time.Since(mail.FirstReadAttemptDate).Minutes()
+	allowedAttempts := float64(7)/30*minsSinceFirstReadAttempt + 3
+	if mail.ReadAttemptCounter < 10 {
+		return allowedAttempts < float64(mail.ReadAttemptCounter)
+	}
+
+	// After that, every 30 minutes the mail can be read once more
+	allowedAttempts = float64(2)/30*minsSinceFirstReadAttempt + 10
+	return allowedAttempts < float64(mail.ReadAttemptCounter)
 }
 
 func postMails(w http.ResponseWriter, r *http.Request) {

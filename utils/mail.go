@@ -5,17 +5,18 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 )
 
 //struct for mails
 type Mail struct {
-	Mail                string    `xml:"Mail"`
-	Caption             string    `xml:"Caption"`
-	Message             string    `xml:"Message"`
-	MailId              int       `xml:"MailId"`
-	ReadAttemptCounter  int       `xml:"ReadAttempt"`
-	LastReadAttemptDate time.Time `xml:"LastAttemptDate"`
+	Mail                 string    `xml:"Mail"`
+	Caption              string    `xml:"Caption"`
+	Message              string    `xml:"Message"`
+	MailId               int       `xml:"MailId"`
+	ReadAttemptCounter   int       `xml:"ReadAttempt"`
+	FirstReadAttemptDate time.Time `xml:"FirstReadAttemptDate"`
 }
 
 type Maillist struct {
@@ -28,7 +29,7 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 	tickets := GetTicketsByClient(mail)
 
 	for _, actTicket := range tickets {
-		if CheckStringsDeviation(2, actTicket.Reference, reference) {
+		if CheckStringsDeviation(2, strings.ToLower(actTicket.Reference), strings.ToLower(reference)) {
 			newTicket, err := AddMessage(actTicket, mail, message)
 			if err != nil {
 				return newTicket, err
@@ -108,7 +109,9 @@ func (m Mail) IncrementReadAttemptsCounter() error {
 	for i, mail := range maillist.Maillist {
 		if mail.MailId == m.MailId {
 			maillist.Maillist[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
-			maillist.Maillist[i].LastReadAttemptDate = time.Now()
+			if maillist.Maillist[i].ReadAttemptCounter == 1 {
+				maillist.Maillist[i].FirstReadAttemptDate = time.Now()
+			}
 			return WriteToXML(maillist, config.MailFilePath())
 		}
 	}
