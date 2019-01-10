@@ -33,7 +33,6 @@ func Setup() {
 func StartServer() {
 	Setup()
 
-	// TODO: Only allow certain http methods create a wrapper in this file
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/signUp", ServeUserRegistration)
 	http.HandleFunc("/signIn", ServeAuthentication)
