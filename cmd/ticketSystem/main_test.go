@@ -32,8 +32,7 @@ func TestCheckPortAvailability(t *testing.T) {
 
 	listener, err = net.Listen("tcp", ":"+strconv.Itoa(availablePort))
 	assert.Nil(t, err)
-	err = listener.Close()
-	assert.Nil(t, err)
+	defer listener.Close()
 
 	actual, err = checkPortAvailability(availablePort)
 	assert.False(t, actual)
