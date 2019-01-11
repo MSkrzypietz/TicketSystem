@@ -3,20 +3,33 @@ package webserver
 // Matrikelnummern: 6813128, 1665910, 7612558
 
 import (
-	"TicketSystem/config"
 	"TicketSystem/utils"
+	"bytes"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
-func TestStartServerPanic(t *testing.T) {
+func TestStartServer(t *testing.T) {
 	setup()
 	defer teardown()
 
-	config.ServerCertPath = "wrongPath"
-	//assert.Panics(t, StartServer)
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+
+	shutdown := make(chan bool)
+	done := make(chan bool)
+	go StartServer(done, shutdown)
+	done <- true
+	<-shutdown
+
+	log.SetOutput(os.Stderr)
+	output := buf.String()
+	assert.Contains(t, output, "Shutting down the server...")
+	assert.Contains(t, output, "The shut down gracefully :)")
 }
 
 func TestAuthenticateWithoutCookie(t *testing.T) {

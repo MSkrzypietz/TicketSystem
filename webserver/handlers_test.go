@@ -25,6 +25,8 @@ import (
 func setup() {
 	config.DataPath = "datatest"
 	config.TemplatePath = path.Join("..", "templates")
+	config.ServerKeyPath = path.Join("..", "etc", "server.key")
+	config.ServerCertPath = path.Join("..", "etc", "server.crt")
 	Setup()
 }
 

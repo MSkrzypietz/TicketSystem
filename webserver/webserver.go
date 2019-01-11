@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	"time"
 )
 
 type templateContext struct {
@@ -72,8 +71,7 @@ func StartServer(done <-chan bool, shutdown chan<- bool) {
 	<-done
 
 	log.Println("Shutting down the server...")
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	err := server.Shutdown(ctx)
+	err := server.Shutdown(context.Background())
 	if err != nil {
 		log.Printf("Error shutting down the server: %v\n", err)
 	}

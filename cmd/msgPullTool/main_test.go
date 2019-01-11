@@ -20,13 +20,6 @@ func setup() {
 	config.ServerCertPath = path.Join("..", "..", "etc", "server.crt")
 	config.Port = getAvailablePort()
 	webserver.Setup()
-
-	shutdown := make(chan bool)
-	done := make(chan bool)
-	go webserver.StartServer(done, shutdown)
-	defer func() {
-		done <- true
-	}()
 }
 
 func getAvailablePort() int {
@@ -54,18 +47,29 @@ func TestPullEmailsInvalidURL(t *testing.T) {
 	setup()
 	defer teardown()
 
+	shutdown := make(chan bool)
+	done := make(chan bool)
+	go webserver.StartServer(done, shutdown)
+
 	_ = utils.SendMail("test@gmail.de", "Test Subject 1", "Test Message 1")
 	_ = utils.SendMail("test@gmail.de", "Test Subject 2", "Test Message 2")
 	_ = utils.SendMail("test@gmail.de", "Test Subject 3", "Test Message 3")
 
 	emails, err := pullEmails("https://host:443")
 	assert.NotNil(t, err)
-	assert.Equal(t, 0, len(emails))
+	assert.Nil(t, emails)
+
+	done <- true
+	<-shutdown
 }
 
 func TestPullEmailsSuccess(t *testing.T) {
 	setup()
 	defer teardown()
+
+	shutdown := make(chan bool)
+	done := make(chan bool)
+	go webserver.StartServer(done, shutdown)
 
 	_ = utils.SendMail("test@gmail.de", "Test Subject 1", "Test Message 1")
 	_ = utils.SendMail("test@gmail.de", "Test Subject 2", "Test Message 2")
@@ -74,4 +78,7 @@ func TestPullEmailsSuccess(t *testing.T) {
 	emails, err := pullEmails("https://localhost:" + strconv.Itoa(config.Port))
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(emails))
+
+	done <- true
+	<-shutdown
 }
