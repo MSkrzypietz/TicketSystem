@@ -112,7 +112,7 @@ func InitDataStorage() error {
 			if err != nil {
 				return err
 			}
-			return WriteToXML(Maillist{}, config.MailFilePath())
+			return WriteToXML(MailList{}, config.MailFilePath())
 		}
 	}
 

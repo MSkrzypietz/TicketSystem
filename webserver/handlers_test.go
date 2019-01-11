@@ -1617,7 +1617,7 @@ func TestServeMailsSentNotificationSuccess(t *testing.T) {
 	assert.Nil(t, err)
 	maillist, err := utils.ReadMailsFile()
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(maillist.Maillist))
+	assert.Equal(t, 1, len(maillist.MailList))
 
 	notifyReq := utils.Request{MailIDs: []int{1}}
 	payload, err := xml.Marshal(notifyReq)
@@ -1633,5 +1633,5 @@ func TestServeMailsSentNotificationSuccess(t *testing.T) {
 
 	maillist, err = utils.ReadMailsFile()
 	assert.Nil(t, err)
-	assert.Equal(t, 0, len(maillist.Maillist))
+	assert.Equal(t, 0, len(maillist.MailList))
 }

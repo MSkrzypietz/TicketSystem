@@ -413,7 +413,7 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	var mails []utils.MailData
-	for _, mail := range rawMails.Maillist {
+	for _, mail := range rawMails.MailList {
 		if preventEMailPingPong(mail) {
 			continue
 		}
@@ -423,7 +423,7 @@ func getMails(w http.ResponseWriter, _ *http.Request) {
 			utils.RespondWithError(w, http.StatusInternalServerError, "We had internal issues fetching the data for you. Please try it again!")
 			return
 		} else {
-			mail := utils.MailData{EMailAddress: mail.Mail, Subject: mail.Caption, Message: mail.Message}
+			mail := utils.MailData{EMailAddress: mail.Mail, Subject: mail.Subject, Message: mail.Message}
 			mails = append(mails, mail)
 		}
 	}

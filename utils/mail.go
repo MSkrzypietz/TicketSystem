@@ -11,17 +11,17 @@ import (
 
 //struct for mails
 type Mail struct {
-	Mail                 string    `xml:"Mail"`
-	Caption              string    `xml:"Caption"`
+	ID                   int       `xml:"ID"`
+	Mail                 string    `xml:"EMailAddress"`
+	Subject              string    `xml:"Subject"`
 	Message              string    `xml:"Message"`
-	MailId               int       `xml:"MailId"`
 	ReadAttemptCounter   int       `xml:"ReadAttempt"`
 	FirstReadAttemptDate time.Time `xml:"FirstReadAttemptDate"`
 }
 
-type Maillist struct {
-	MailIdCounter int    `xml:"MailIdCounter"`
-	Maillist      []Mail `xml:"mails>mail"`
+type MailList struct {
+	MailIDCounter int    `xml:"MailIDCounter"`
+	MailList      []Mail `xml:"mails>mail"`
 }
 
 //creating or merging a ticket that was send by mail
@@ -53,23 +53,23 @@ func DeleteMails(mailIds []int) error {
 		return err
 	}
 
-	mailIdCounter := maillist.MailIdCounter
+	mailIdCounter := maillist.MailIDCounter
 
 	mailMap := make(map[int]Mail)
-	for _, actMail := range maillist.Maillist {
-		mailMap[actMail.MailId] = actMail
+	for _, actMail := range maillist.MailList {
+		mailMap[actMail.ID] = actMail
 	}
 
 	for _, actId := range mailIds {
 		delete(mailMap, actId)
 	}
 
-	var newMaillist Maillist
+	var newMaillist MailList
 	for _, actMail := range mailMap {
-		newMaillist.Maillist = append(newMaillist.Maillist, actMail)
+		newMaillist.MailList = append(newMaillist.MailList, actMail)
 	}
 
-	newMaillist.MailIdCounter = mailIdCounter
+	newMaillist.MailIDCounter = mailIdCounter
 	return WriteToXML(newMaillist, config.MailFilePath())
 }
 
@@ -79,23 +79,23 @@ func SendMail(mail string, caption string, message string) error {
 	if err != nil {
 		return err
 	}
-	nextMailId := maillist.MailIdCounter + 1
-	newMail := Mail{Mail: mail, Caption: caption, Message: message, MailId: nextMailId}
-	maillist.Maillist = append(maillist.Maillist, newMail)
-	maillist.MailIdCounter = nextMailId
+	nextMailId := maillist.MailIDCounter + 1
+	newMail := Mail{Mail: mail, Subject: caption, Message: message, ID: nextMailId}
+	maillist.MailList = append(maillist.MailList, newMail)
+	maillist.MailIDCounter = nextMailId
 	return WriteToXML(maillist, config.MailFilePath())
 }
 
 //get all mails from the xml file
-func ReadMailsFile() (Maillist, error) {
+func ReadMailsFile() (MailList, error) {
 	file, err := ioutil.ReadFile(config.MailFilePath())
 	if err != nil {
-		return Maillist{}, err
+		return MailList{}, err
 	}
-	var maillist Maillist
+	var maillist MailList
 	err = xml.Unmarshal(file, &maillist)
 	if err != nil {
-		return Maillist{}, err
+		return MailList{}, err
 	}
 	return maillist, nil
 }
@@ -106,13 +106,13 @@ func (m *Mail) IncrementReadAttemptsCounter() error {
 		return err
 	}
 
-	for i, mail := range maillist.Maillist {
-		if mail.MailId == m.MailId {
-			maillist.Maillist[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
-			m.ReadAttemptCounter = maillist.Maillist[i].ReadAttemptCounter
-			if maillist.Maillist[i].ReadAttemptCounter == 1 {
-				maillist.Maillist[i].FirstReadAttemptDate = time.Now()
-				m.FirstReadAttemptDate = maillist.Maillist[i].FirstReadAttemptDate
+	for i, mail := range maillist.MailList {
+		if mail.ID == m.ID {
+			maillist.MailList[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
+			m.ReadAttemptCounter = maillist.MailList[i].ReadAttemptCounter
+			if maillist.MailList[i].ReadAttemptCounter == 1 {
+				maillist.MailList[i].FirstReadAttemptDate = time.Now()
+				m.FirstReadAttemptDate = maillist.MailList[i].FirstReadAttemptDate
 			}
 			return WriteToXML(maillist, config.MailFilePath())
 		}
