@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// this file is inspired by https://itnext.io/building-restful-web-api-service-using-golang-chi-mysql-d85f427dee54
+// This file is inspired by https://itnext.io/building-restful-web-api-service-using-golang-chi-mysql-d85f427dee54
 
 type Request struct {
 	Mail    MailData `xml:"mail,omitempty"`
@@ -29,18 +29,19 @@ type MailData struct {
 	Message      string `xml:"message"`
 }
 
-// Writes xml error reponse
+// Writes xml error response
 func RespondWithError(w http.ResponseWriter, code int, msg string) {
 	RespondWithXML(w, code, Response{Meta: MetaData{Code: code, Message: msg}})
 }
 
-// Writes xml response
+// Writes xml response for any payload that can be converted into XML
 func RespondWithXML(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := xml.Marshal(payload)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Couldn't marshal the response payload")
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(code)
 	_, err = w.Write(response)

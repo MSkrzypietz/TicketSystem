@@ -41,7 +41,7 @@ func main() {
 		hasText := func(input string) bool {
 			return len(strings.TrimSpace(input)) > 0
 		}
-		emailAddress := readInput(reader, "email address", utils.RegExMail)
+		emailAddress := readInput(reader, "email address", utils.CheckMailFormal)
 		subject := readInput(reader, "subject", hasText)
 		message := readInput(reader, "message", hasText)
 

@@ -77,7 +77,7 @@ func ServeTicketCreation(w http.ResponseWriter, r *http.Request) {
 	subject := r.PostFormValue("subject")
 	message := r.PostFormValue("message")
 
-	if email == "" || subject == "" || message == "" || !utils.RegExMail(email) || !utils.CheckEmptyXssString(subject) || !utils.CheckEmptyXssString(message) {
+	if email == "" || subject == "" || message == "" || !utils.CheckMailFormal(email) || !utils.CheckEmptyXSSString(subject) || !utils.CheckEmptyXSSString(message) {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}
@@ -113,7 +113,7 @@ func ServeUserRegistration(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password1")
 
 	// DebugMode removes annoying checks when testing
-	if !config.DebugMode && (!utils.CheckUsernameFormal(username) || !utils.CheckPasswdFormal(password)) {
+	if !config.DebugMode && (!utils.CheckUsernameFormal(username) || !utils.CheckPasswordFormal(password)) {
 		http.Redirect(w, r, utils.ErrorInvalidInputs.ErrorPageURL(), http.StatusFound)
 		return
 	}

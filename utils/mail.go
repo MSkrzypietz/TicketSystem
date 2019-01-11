@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-//struct for mails
 type Mail struct {
 	ID                   int       `xml:"ID"`
 	Mail                 string    `xml:"EMailAddress"`
@@ -27,16 +26,18 @@ type MailList struct {
 
 var mutexMailID = &sync.Mutex{}
 
-//creating or merging a ticket that was send by mail
+// Creates or merges a ticket that was sent through the REST API (PUSH /mails)
 func CreateTicketFromMail(mail string, reference string, message string) (Ticket, error) {
 	tickets := GetTicketsByClient(mail)
 
+	// Check if the ticket is referring to an existing ticket
 	for _, actTicket := range tickets {
 		if CheckStringsDeviation(2, strings.ToLower(actTicket.Reference), strings.ToLower(reference)) {
 			newTicket, err := AddMessage(actTicket, mail, message)
 			if err != nil {
 				return newTicket, err
 			}
+			// Reopen closed tickets
 			if newTicket.Status == TicketStatusClosed {
 				err = ChangeStatus(newTicket.ID, TicketStatusInProcess)
 				newTicket.Status = TicketStatusInProcess
@@ -49,21 +50,21 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 	return CreateTicket(mail, reference, message)
 }
 
-//delete all mails in the xml file which are already sent
+// Deletes all mails in the xml file which are already sent
 func DeleteMails(mailIds []int) error {
 	// Synchronizing the change of the mail ID counter
 	mutexMailID.Lock()
 	defer mutexMailID.Unlock()
 
-	maillist, err := ReadMailsFile()
+	mailList, err := ReadMailsFile()
 	if err != nil {
 		return err
 	}
 
-	mailIdCounter := maillist.MailIDCounter
+	mailIdCounter := mailList.MailIDCounter
 
 	mailMap := make(map[int]Mail)
-	for _, actMail := range maillist.MailList {
+	for _, actMail := range mailList.MailList {
 		mailMap[actMail.ID] = actMail
 	}
 
@@ -80,52 +81,58 @@ func DeleteMails(mailIds []int) error {
 	return WriteToXML(newMaillist, config.MailFilePath())
 }
 
-//store the message as a mail in the specific xml file
+// Stores the input as a mail which needs to be sent
 func SendMail(mail string, caption string, message string) error {
 	// Synchronizing the change of the mail ID counter
 	mutexMailID.Lock()
 	defer mutexMailID.Unlock()
 
-	maillist, err := ReadMailsFile()
+	mailList, err := ReadMailsFile()
 	if err != nil {
 		return err
 	}
-	nextMailId := maillist.MailIDCounter + 1
+
+	nextMailId := mailList.MailIDCounter + 1
 	newMail := Mail{Mail: mail, Subject: caption, Message: message, ID: nextMailId}
-	maillist.MailList = append(maillist.MailList, newMail)
-	maillist.MailIDCounter = nextMailId
-	return WriteToXML(maillist, config.MailFilePath())
+	mailList.MailList = append(mailList.MailList, newMail)
+	mailList.MailIDCounter = nextMailId
+
+	return WriteToXML(mailList, config.MailFilePath())
 }
 
-//get all mails from the xml file
+// Returns all mails which have to be sent
 func ReadMailsFile() (MailList, error) {
 	file, err := ioutil.ReadFile(config.MailFilePath())
 	if err != nil {
 		return MailList{}, err
 	}
-	var maillist MailList
-	err = xml.Unmarshal(file, &maillist)
+
+	var mailList MailList
+	err = xml.Unmarshal(file, &mailList)
 	if err != nil {
 		return MailList{}, err
 	}
-	return maillist, nil
+
+	return mailList, nil
 }
 
 func (m *Mail) IncrementReadAttemptsCounter() error {
-	maillist, err := ReadMailsFile()
+	mailList, err := ReadMailsFile()
 	if err != nil {
 		return err
 	}
 
-	for i, mail := range maillist.MailList {
+	for i, mail := range mailList.MailList {
 		if mail.ID == m.ID {
-			maillist.MailList[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
-			m.ReadAttemptCounter = maillist.MailList[i].ReadAttemptCounter
-			if maillist.MailList[i].ReadAttemptCounter == 1 {
-				maillist.MailList[i].FirstReadAttemptDate = time.Now()
-				m.FirstReadAttemptDate = maillist.MailList[i].FirstReadAttemptDate
+			mailList.MailList[i].ReadAttemptCounter = mail.ReadAttemptCounter + 1
+			m.ReadAttemptCounter = mailList.MailList[i].ReadAttemptCounter
+
+			// Store the first read attempt only once
+			if mailList.MailList[i].ReadAttemptCounter == 1 {
+				mailList.MailList[i].FirstReadAttemptDate = time.Now()
+				m.FirstReadAttemptDate = mailList.MailList[i].FirstReadAttemptDate
 			}
-			return WriteToXML(maillist, config.MailFilePath())
+			return WriteToXML(mailList, config.MailFilePath())
 		}
 	}
 	return fmt.Errorf("couldn't find the email")

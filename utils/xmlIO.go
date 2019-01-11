@@ -13,18 +13,16 @@ import (
 	"time"
 )
 
-//struct that defines a ticket with the parameters ID, mail of the client, reference, actual status, editor and a list of all messages
 type Ticket struct {
 	XMLName     xml.Name  `xml:"Ticket"`
 	ID          int       `xml:"ID"`
-	Client      string    `xml:"Client"`
-	Reference   string    `xml:"Reference"`
+	Client      string    `xml:"ClientAddress"`
+	Reference   string    `xml:"Subject"`
 	Status      int       `xml:"Status"`
 	Editor      string    `xml:"Editor"`
 	MessageList []Message `xml:"MessageList>Message"`
 }
 
-//struct that defines a message with the parameters date of creation, name or mail of the actor and the text of the message
 type Message struct {
 	CreationDate time.Time `xml:"CreationDate"`
 	Actor        string    `xml:"Actor"`
@@ -41,7 +39,6 @@ var ticketMap = make(map[int]Ticket)
 
 var mutexTicketID = &sync.Mutex{}
 
-//struct for one user
 type User struct {
 	Username    string `xml:"Username"`
 	Password    string `xml:"Password"`
@@ -49,11 +46,11 @@ type User struct {
 	HolidayMode bool   `xml:"HolidayMode"`
 }
 
-type Userlist struct {
+type UserList struct {
 	User []User `xml:"users>user"`
 }
 
-//creates directory for the data storage if it doesn´t exist
+// Creates directory for the data storage if it does not exist
 func InitDataStorage() error {
 	_, err := os.Stat(config.TicketsPath())
 	if err != nil {
@@ -119,7 +116,7 @@ func InitDataStorage() error {
 	return err
 }
 
-//function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns the ticket struct and an error whether the creation was successful.
+// Creates a ticket from the inputs
 func CreateTicket(client string, reference string, text string) (Ticket, error) {
 	// Synchronizing this method to prevent multiple tickets with the same ID
 	mutexTicketID.Lock()
@@ -131,23 +128,24 @@ func CreateTicket(client string, reference string, text string) (Ticket, error) 
 	if err != nil {
 		return Ticket{}, err
 	}
+
 	return AddMessage(newTicket, client, text)
 }
 
-//adds a message to a specified tickets. Functions includes the following parameters: specified ticket, the actor and the text of the message. Returns the new ticket and an error whether it was successful.
+// Adds a message to a specified tickets
 func AddMessage(ticket Ticket, actor string, text string) (Ticket, error) {
 	newMessage := Message{CreationDate: time.Now(), Actor: actor, Text: text}
 	ticket.MessageList = append(ticket.MessageList, newMessage)
 	return ticket, StoreTicket(ticket)
 }
 
-//stores a ticket as xml file
+// Stores a ticket as a xml file
 func StoreTicket(ticket Ticket) error {
 	delete(ticketMap, ticket.ID)
 	return WriteToXML(ticket, config.TicketXMLPath(ticket.ID))
 }
 
-//returns a ticket from the cache or from the corresponding xml file.
+// Returns the requested ticket from the cache or from the corresponding xml file
 func ReadTicket(id int) (Ticket, error) {
 	if ticketMap[id].ID != 0 {
 		return ticketMap[id], nil
@@ -157,50 +155,57 @@ func ReadTicket(id int) (Ticket, error) {
 	if err != nil {
 		return Ticket{}, err
 	}
+
 	var ticket Ticket
 	err = xml.Unmarshal(file, &ticket)
 	if err != nil {
 		return Ticket{}, err
 	}
+
 	err = checkCache()
 	if err != nil {
 		return Ticket{}, err
 	}
+
 	ticketMap[ticket.ID] = ticket
 	return ticket, nil
 }
 
-//deletes a ticket by its ID and returns an error whether it was successful.
+// Deletes a ticket by its ID
 func deleteTicket(id int) error {
 	delete(ticketMap, id)
+
 	err := os.Remove(config.TicketXMLPath(id))
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-//changes the editor of a ticket and returns an error whether the change was successful.
+// Changes the editor of a ticket
 func ChangeEditor(id int, editor string) error {
 	ticket, err := ReadTicket(id)
 	if err != nil {
 		return err
 	}
+
 	ticket.Editor = editor
 	return StoreTicket(ticket)
 }
 
-//changes the status of a ticket and returns an error whether the change was successful.
+// Changes the status of a ticket
 func ChangeStatus(id int, status int) error {
 	ticket, err := ReadTicket(id)
 	if err != nil {
 		return err
 	}
+
 	ticket.Status = status
 	return StoreTicket(ticket)
 }
 
-//returns a list of tickets by a specified ticket status. Status is specified in the parameters of the function.
+// Returns a list of tickets by a specified ticket status
 func GetTicketsByStatus(status int) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
@@ -209,10 +214,11 @@ func GetTicketsByStatus(status int) []Ticket {
 			tickets = append(tickets, tmp)
 		}
 	}
+
 	return tickets
 }
 
-//returns a list of tickets owned by one editor who is specified in the parameters of the function
+// Returns a list of tickets owned by the specified editor
 func GetTicketsByEditor(editor string) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
@@ -221,10 +227,11 @@ func GetTicketsByEditor(editor string) []Ticket {
 			tickets = append(tickets, tmp)
 		}
 	}
+
 	return tickets
 }
 
-//returns a list of tickets owned by a client who is specified in the parameters of the function
+// Returns a list of tickets owned by the specified client
 func GetTicketsByClient(client string) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
@@ -233,65 +240,76 @@ func GetTicketsByClient(client string) []Ticket {
 			tickets = append(tickets, tmp)
 		}
 	}
+
 	return tickets
 }
 
-//returns the actual ticket ID in order to create a new ticket or to get to know the number of the stored tickets.
+// Returns the current ticket ID. Unexpected errors will return -1
 func getTicketIDCounter() int {
 	file, err := ioutil.ReadFile(config.DefinitionsFilePath())
 	if err != nil {
 		return -1
 	}
+
 	var IDCounter int
 	err = xml.Unmarshal(file, &IDCounter)
 	if err != nil {
 		return -1
 	}
+
 	return IDCounter
 }
 
-//merge two tickets, store them as one ticket and delete the other one. Returns an error whether the merge was successful.
+// Merges two tickets, store them as one ticket and delete the other one
 func MergeTickets(firstTicketID int, secondTicketID int) error {
 	firstTicket, err := ReadTicket(firstTicketID)
 	if err != nil {
 		return err
 	}
+
 	secondTicket, err := ReadTicket(secondTicketID)
 	if err != nil {
 		return err
 	}
+
 	if firstTicket.Editor != secondTicket.Editor {
 		return fmt.Errorf("the two tickets for the merging process do not have the same editors")
 	}
+
 	for _, msgList := range secondTicket.MessageList {
 		firstTicket.MessageList = append(firstTicket.MessageList, msgList)
 	}
+
 	err = ChangeStatus(firstTicketID, TicketStatusInProcess)
 	if err != nil {
 		return err
 	}
+
 	err = deleteTicket(secondTicketID)
 	if err != nil {
 		return err
 	}
+
 	return StoreTicket(firstTicket)
 }
 
-//functions writes an object to an specified xml file and returns an error whether the writing was successful.
+// Writes an object to the specified xml file
 func WriteToXML(v interface{}, path string) error {
-	xmlstring, err := xml.MarshalIndent(v, "", "    ")
+	content, err := xml.MarshalIndent(v, "", "    ")
 	if err != nil {
 		return err
 	}
-	xmlstring = []byte(xml.Header + string(xmlstring))
-	err = ioutil.WriteFile(path, xmlstring, 0644)
+
+	content = []byte(xml.Header + string(content))
+	err = ioutil.WriteFile(path, content, 0644)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-//function checks if there are too many tickets in the cache and in the case of too many tickets one will be deleted. Returns an error whether it was successful.
+// Checks if there are too many tickets in the cache and in the case of too many tickets one will be deleted
 func checkCache() error {
 	if len(ticketMap) > 9 {
 		randNumber := rand.Intn(len(ticketMap))
@@ -309,55 +327,64 @@ func checkCache() error {
 	return nil
 }
 
-//creates a new user and returns the user and an error whether the creation was successful.
+// Creates a new user
 func CreateUser(name string, password string) (User, error) {
 	usersMap, err := ReadUsers()
 	if err != nil {
 		return User{}, err
 	}
+
 	if _, ok := usersMap[name]; ok {
 		return User{}, fmt.Errorf("a user with the same name already exists")
 	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return User{}, err
 	}
+
 	usersMap[name] = User{Username: name, Password: string(hash), SessionID: "", HolidayMode: false}
 	err = storeUsers(usersMap)
 	if err != nil {
 		return User{}, err
 	}
+
 	return usersMap[name], nil
 }
 
-//reads all users from the xml-file and returns the users and an error whether the reading process was successful.
+// Returns all users
 func ReadUsers() (map[string]User, error) {
 	usersMap := make(map[string]User)
+
 	file, err := ioutil.ReadFile(config.UsersFilePath())
 	if err != nil {
 		return usersMap, err
 	}
-	var userlist Userlist
-	err = xml.Unmarshal(file, &userlist)
+
+	var userList UserList
+	err = xml.Unmarshal(file, &userList)
 	if err != nil && err != io.EOF {
 		return usersMap, err
 	}
-	for _, tmpUser := range userlist.User {
+
+	for _, tmpUser := range userList.User {
 		usersMap[tmpUser.Username] = tmpUser
 	}
+
 	return usersMap, nil
 }
 
-//stores all users from the map to the xml file and returns an error whether the storing process was successful.
-func storeUsers(usermap map[string]User) error {
+// Stores all users from the map to the xml file
+func storeUsers(userMap map[string]User) error {
 	var users []User
-	for _, tmpUser := range usermap {
+	for _, tmpUser := range userMap {
 		users = append(users, tmpUser)
 	}
-	return WriteToXML(Userlist{User: users}, config.UsersFilePath())
+
+	return WriteToXML(UserList{User: users}, config.UsersFilePath())
 }
 
-//checks if the user is registrated and returns a bool. The bool value is false if there is already a user with that name.
+// Checks if the user is registered
 func CheckUser(name string) (bool, error) {
 	usersMap, err := ReadUsers()
 	if err != nil {
@@ -369,7 +396,7 @@ func CheckUser(name string) (bool, error) {
 	return true, nil
 }
 
-//checks if the username and the password is correct. Returns a bool whether it is correct.
+// Checks if the hashed password is the correct password
 func VerifySessionCookie(name string, password string) error {
 	usersMap, err := ReadUsers()
 	if err != nil {
@@ -383,7 +410,7 @@ func VerifySessionCookie(name string, password string) error {
 	return nil
 }
 
-//Login of a user to the ticket system. Returns an error if an error occurs.
+// Login of a user to the ticket system
 func LoginUser(name string, password string, session string) error {
 	usersMap, err := ReadUsers()
 	if err != nil {
@@ -394,57 +421,64 @@ func LoginUser(name string, password string, session string) error {
 	if err != nil {
 		return err
 	}
+
 	tmpUser := usersMap[name]
 	tmpUser.SessionID = session
 	usersMap[name] = tmpUser
 	return storeUsers(usersMap)
 }
 
-//Logout of a user and deletes the session id. Returns an error if an error occurs.
+// Logout of a user and deletes the session id
 func LogoutUser(name string) error {
-	usersmap, err := ReadUsers()
+	usersMap, err := ReadUsers()
 	if err != nil {
 		return err
 	}
-	if usersmap[name].Username != name {
+
+	if usersMap[name].Username != name {
 		return fmt.Errorf("user does not exist")
 	}
-	tmpUser := usersmap[name]
+
+	tmpUser := usersMap[name]
 	tmpUser.SessionID = ""
-	usersmap[name] = tmpUser
-	return storeUsers(usersmap)
+	usersMap[name] = tmpUser
+	return storeUsers(usersMap)
 }
 
-//gets the actual session id of an user
+// Returns the current session id of an user
 func GetUserSession(name string) string {
 	usersMap, _ := ReadUsers()
 	return usersMap[name].SessionID
 }
 
-//returns an user by a specified session id
+// Returns a user by the specified session id
 func GetUserBySession(session string) (User, error) {
 	if session == "" {
 		return User{}, fmt.Errorf("session is not set")
 	}
+
 	usersMap, _ := ReadUsers()
 	for _, tmpUser := range usersMap {
 		if tmpUser.SessionID == session {
 			return tmpUser, nil
 		}
 	}
+
 	return User{}, fmt.Errorf("user does not exist")
 }
 
-//sets the holiday mode of the specified user
+// Sets the holiday mode of the specified user
 func SetUserHolidayMode(name string, holidayMode bool) error {
 	tmpUsers, err := ReadUsers()
 	if err != nil {
 		return err
 	}
+
 	user := tmpUsers[name]
 	if user.Username == "" {
 		return fmt.Errorf("user does not exist")
 	}
+
 	user.HolidayMode = holidayMode
 	tmpUsers[name] = user
 	err = storeUsers(tmpUsers)

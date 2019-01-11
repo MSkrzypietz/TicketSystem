@@ -410,11 +410,11 @@ func TestLogoutUser(t *testing.T) {
 	_, err = CreateUser("mustermann", "musterpasswort")
 	assert.Nil(t, err)
 	assert.Nil(t, LoginUser("mustermann", "musterpasswort", "1234"))
-	usersmap, _ := ReadUsers()
-	assert.Equal(t, "1234", usersmap["mustermann"].SessionID)
+	usersMap, _ := ReadUsers()
+	assert.Equal(t, "1234", usersMap["mustermann"].SessionID)
 	assert.Nil(t, LogoutUser("mustermann"))
-	usersmap, _ = ReadUsers()
-	assert.Equal(t, "", usersmap["mustermann"].SessionID)
+	usersMap, _ = ReadUsers()
+	assert.Equal(t, "", usersMap["mustermann"].SessionID)
 	assert.NotNil(t, LogoutUser("falscherName"))
 }
 

@@ -53,10 +53,10 @@ func TestDeleteMails(t *testing.T) {
 	var idField []int
 	idField = append(idField, 1)
 	assert.Nil(t, DeleteMails(idField))
-	actMaillist, _ := ReadMailsFile()
-	var expectedMaillist []Mail
-	expectedMaillist = append(expectedMaillist, Mail{Mail: "mail@test", Subject: "captionTwo", Message: "test", ID: 2})
-	assert.Equal(t, MailList{2, expectedMaillist}, actMaillist)
+	actMailList, _ := ReadMailsFile()
+	var expectedMailList []Mail
+	expectedMailList = append(expectedMailList, Mail{Mail: "mail@test", Subject: "captionTwo", Message: "test", ID: 2})
+	assert.Equal(t, MailList{2, expectedMailList}, actMailList)
 }
 
 func TestSendMail(t *testing.T) {
@@ -69,11 +69,11 @@ func TestSendMail(t *testing.T) {
 	config.DataPath = "datatest"
 	assert.Nil(t, SendMail("test@test", "testCaption", "testMsg"))
 
-	var expectedMaillist []Mail
-	expectedMaillist = append(expectedMaillist, Mail{Mail: "test@test", Subject: "testCaption", Message: "testMsg", ID: 1})
-	actMaillist, err := ReadMailsFile()
+	var expectedMailList []Mail
+	expectedMailList = append(expectedMailList, Mail{Mail: "test@test", Subject: "testCaption", Message: "testMsg", ID: 1})
+	actMailList, err := ReadMailsFile()
 	assert.Nil(t, err)
-	assert.Equal(t, MailList{1, expectedMaillist}, actMaillist)
+	assert.Equal(t, MailList{1, expectedMailList}, actMailList)
 }
 
 func TestReadMailsFile(t *testing.T) {
@@ -88,11 +88,11 @@ func TestReadMailsFile(t *testing.T) {
 	var mails []Mail
 	mails = append(mails, Mail{Mail: "test@test", Subject: "testOne", Message: "testOne", ID: 1})
 	mails = append(mails, Mail{Mail: "test@test", Subject: "testTwo", Message: "testTwo", ID: 2})
-	expectedMaillist := MailList{1, mails}
-	assert.Nil(t, WriteToXML(expectedMaillist, config.MailFilePath()))
-	actMaillist, err := ReadMailsFile()
+	expectedMailList := MailList{1, mails}
+	assert.Nil(t, WriteToXML(expectedMailList, config.MailFilePath()))
+	actMailList, err := ReadMailsFile()
 	assert.Nil(t, err)
-	assert.Equal(t, expectedMaillist, actMaillist)
+	assert.Equal(t, expectedMailList, actMailList)
 }
 
 func TestIncrementReadAttemptsCounter(t *testing.T) {
@@ -108,8 +108,8 @@ func TestIncrementReadAttemptsCounter(t *testing.T) {
 	err = testMail.IncrementReadAttemptsCounter()
 	assert.NotNil(t, err)
 
-	maillist := MailList{1, []Mail{testMail}}
-	err = WriteToXML(maillist, config.MailFilePath())
+	mailList := MailList{1, []Mail{testMail}}
+	err = WriteToXML(mailList, config.MailFilePath())
 	assert.Nil(t, err)
 	err = testMail.IncrementReadAttemptsCounter()
 	assert.Nil(t, err)

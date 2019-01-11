@@ -8,7 +8,8 @@ import (
 	"strings"
 )
 
-func RegExMail(email string) bool {
+// Checks if the email is valid
+func CheckMailFormal(email string) bool {
 	emailRegExp := regexp.MustCompile(
 		"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]" +
 			"(?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}" +
@@ -16,14 +17,17 @@ func RegExMail(email string) bool {
 	return emailRegExp.MatchString(email)
 }
 
-func CheckEmptyXssString(text string) bool {
+// Checks if the string is empty, too long and doesn't contain XSS
+func CheckEmptyXSSString(text string) bool {
 	if len(text) == 0 || len(text) > 400 {
 		return false
 	}
+
 	xss := "<>[]"
 	return !strings.ContainsAny(text, xss)
 }
 
+// Creates an universally unique identifier
 func CreateUUID(length int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -31,11 +35,12 @@ func CreateUUID(length int) string {
 	for i := range byteSlice {
 		byteSlice[i] = letters[rand.Int63()%int64(len(letters))]
 	}
+
 	return string(byteSlice)
 }
 
 // Checks if the inputs contains only ASCII letters and digits, with hyphens, underscores and spaces
-// as internal separators.
+// as internal separators. Username needs at least 5 chars, it can't exceed 29 chars
 // Source: https://stackoverflow.com/questions/1221985/how-to-validate-a-user-name-with-regex
 func CheckUsernameFormal(name string) bool {
 	if len(name) <= 4 || len(name) >= 30 {
@@ -46,37 +51,30 @@ func CheckUsernameFormal(name string) bool {
 	return nameRegExp.MatchString(name)
 }
 
-func CheckPasswdFormal(passwd string) bool {
-	if len(passwd) <= 4 {
+// Checks safety of a password by requiring numbers, letters, uppercase letters and symbols in the passwords.
+// Spaces are forbidden
+func CheckPasswordFormal(password string) bool {
+	if len(password) <= 4 {
 		return false
 	}
+
 	numbers := "0123456789"
 	letters := "abcdefghijklmnopqrstuvwxyz"
 	symbols := "!#+-*.,:;/()§$%&?"
 	space := " "
 
-	if strings.ContainsAny(passwd, numbers) && strings.ContainsAny(passwd, letters) &&
-		strings.ContainsAny(passwd, strings.ToUpper(letters)) && strings.ContainsAny(passwd, symbols) &&
-		!strings.ContainsAny(passwd, space) {
+	if strings.ContainsAny(password, numbers) && strings.ContainsAny(password, letters) &&
+		strings.ContainsAny(password, strings.ToUpper(letters)) && strings.ContainsAny(password, symbols) &&
+		!strings.ContainsAny(password, space) {
 		return true
-	} else {
-		// No number or capital or normal letter or symbol or whitespace in password
-		return false
 	}
 
+	return false
 }
 
+// Checks if strings are not empty and equal
 func CheckEqualStrings(string1, string2 string) bool {
-	// Check strings on empty strings and matching
-	if string1 != "" && string2 != "" {
-		if string1 == string2 {
-			return true
-		} else {
-			return false
-		}
-	} else {
-		return false
-	}
+	return string1 != "" && string2 != "" && string1 == string2
 }
 
 func GetUserFromCookie(r *http.Request) (User, error) {
