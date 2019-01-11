@@ -5,11 +5,13 @@ package webserver
 import (
 	"TicketSystem/config"
 	"TicketSystem/utils"
+	"context"
 	"html/template"
 	"log"
 	"net/http"
 	"path"
 	"strconv"
+	"time"
 )
 
 type templateContext struct {
@@ -34,31 +36,51 @@ func Setup() {
 	templates = template.Must(template.ParseGlob(path.Join(config.TemplatePath, "*")))
 }
 
-func StartServer() {
+func StartServer(done <-chan bool, shutdown chan<- bool) {
 	Setup()
 
-	http.HandleFunc("/", ServeIndex)
-	http.HandleFunc("/signUp", ServeUserRegistration)
-	http.HandleFunc("/signIn", ServeAuthentication)
-	http.HandleFunc("/signOut", ServeSignOut)
-	http.HandleFunc("/tickets/", authenticate(ServeTickets))
-	http.HandleFunc("/tickets/new", ServeNewTicket)
-	http.HandleFunc("/createTicket", ServeTicketCreation)
-	http.HandleFunc("/error/", ServeErrorPage)
-	http.HandleFunc("/addComment", authenticate(ServeAddComment))
-	http.HandleFunc("/assignTicket", authenticate(ServeTicketAssignment))
-	http.HandleFunc("/releaseTicket", authenticate(ServeTicketRelease))
-	http.HandleFunc("/closeTicket", authenticate(ServeCloseTicket))
-	http.HandleFunc("/mergeTickets", authenticate(ServeMergeTickets))
-	http.HandleFunc("/changeHolidayMode", authenticate(ServeChangeHolidayMode))
-	http.HandleFunc("/mails", ServeMailsAPI)
-	http.HandleFunc("/mails/notify", ServeMailsSentNotification)
+	// Using http.NewServeMux() to prevent panics for multiple registrations when testing the cli tools
+	handler := http.NewServeMux()
+	handler.HandleFunc("/", ServeIndex)
+	handler.HandleFunc("/signUp", ServeUserRegistration)
+	handler.HandleFunc("/signIn", ServeAuthentication)
+	handler.HandleFunc("/signOut", ServeSignOut)
+	handler.HandleFunc("/tickets/", authenticate(ServeTickets))
+	handler.HandleFunc("/tickets/new", ServeNewTicket)
+	handler.HandleFunc("/createTicket", ServeTicketCreation)
+	handler.HandleFunc("/error/", ServeErrorPage)
+	handler.HandleFunc("/addComment", authenticate(ServeAddComment))
+	handler.HandleFunc("/assignTicket", authenticate(ServeTicketAssignment))
+	handler.HandleFunc("/releaseTicket", authenticate(ServeTicketRelease))
+	handler.HandleFunc("/closeTicket", authenticate(ServeCloseTicket))
+	handler.HandleFunc("/mergeTickets", authenticate(ServeMergeTickets))
+	handler.HandleFunc("/changeHolidayMode", authenticate(ServeChangeHolidayMode))
+	handler.HandleFunc("/mails", ServeMailsAPI)
+	handler.HandleFunc("/mails/notify", ServeMailsSentNotification)
 
-	log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
-	err := http.ListenAndServeTLS(":"+strconv.Itoa(config.Port), config.ServerCertPath, config.ServerKeyPath, nil)
+	server := &http.Server{Addr: "localhost:" + strconv.Itoa(config.Port), Handler: handler}
+
+	go func() {
+		log.Printf("The server is starting to listen on https://localhost:%d", config.Port)
+		err := server.ListenAndServeTLS(config.ServerCertPath, config.ServerKeyPath)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	// Waiting for user input to begin shutting down the server
+	<-done
+
+	log.Println("Shutting down the server...")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	err := server.Shutdown(ctx)
 	if err != nil {
-		panic(err)
+		log.Printf("Error shutting down the server: %v\n", err)
 	}
+	log.Println("The shut down gracefully :)")
+
+	// Sending a signal back to let the server shut down gracefully and not get interrupted by the main function existing
+	shutdown <- true
 }
 
 // Wrapper to check for session cookie

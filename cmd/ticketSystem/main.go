@@ -5,6 +5,7 @@ package main
 import (
 	"TicketSystem/config"
 	"TicketSystem/webserver"
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -24,7 +25,26 @@ type path struct {
 func main() {
 	handleFlags()
 
-	webserver.StartServer()
+	shutdown := make(chan bool)
+	done := make(chan bool)
+	go webserver.StartServer(done, shutdown)
+
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Println("Type quit to shut the ticket system down.")
+
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			continue
+		}
+
+		if strings.TrimSpace(strings.ToLower(input)) == "quit" {
+			done <- true
+			break
+		}
+	}
+	<-shutdown
 }
 
 func handleFlags() {
