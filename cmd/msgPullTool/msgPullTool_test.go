@@ -1,12 +1,13 @@
 package main
 
+// Matrikelnummern: 6813128, 1665910, 7612558
+
 import (
 	"TicketSystem/config"
 	"TicketSystem/utils"
 	"TicketSystem/webserver"
 	"github.com/stretchr/testify/assert"
 	"log"
-	"net"
 	"os"
 	"path"
 	"strconv"
@@ -18,22 +19,7 @@ func setup() {
 	config.TemplatePath = path.Join("..", "..", "templates")
 	config.ServerKeyPath = path.Join("..", "..", "etc", "server.key")
 	config.ServerCertPath = path.Join("..", "..", "etc", "server.crt")
-	config.Port = getAvailablePort()
 	webserver.Setup()
-}
-
-func getAvailablePort() int {
-	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return -1
-	}
-
-	availablePort := listener.Addr().(*net.TCPAddr).Port
-	if listener.Close() != nil {
-		return -1
-	}
-
-	return availablePort
 }
 
 func teardown() {

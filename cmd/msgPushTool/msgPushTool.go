@@ -64,7 +64,7 @@ func readInput(reader *bufio.Reader, name string, checkInput func(string) bool) 
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Couldn't read input: %v\n", err)
 		}
 
 		input = strings.TrimSpace(input)

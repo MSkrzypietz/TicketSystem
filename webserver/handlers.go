@@ -442,13 +442,13 @@ func preventEMailPingPong(mail utils.Mail) bool {
 
 	// The next 7 read attempts can be made in the first 30 minutes after the first read attempt
 	minsSinceFirstReadAttempt := time.Since(mail.FirstReadAttemptDate).Minutes()
-	allowedAttempts := (float64(7)/30)*minsSinceFirstReadAttempt + 3
+	allowedAttempts := (float64(7)/30)*minsSinceFirstReadAttempt + 2.8
 	if mail.ReadAttemptCounter < 10 {
 		return allowedAttempts < float64(mail.ReadAttemptCounter)
 	}
 
 	// After that, every 30 minutes the mail can be read once more
-	allowedAttempts = (float64(2)/30)*minsSinceFirstReadAttempt + 10
+	allowedAttempts = (float64(2)/30)*minsSinceFirstReadAttempt + 9.8
 	return allowedAttempts < float64(mail.ReadAttemptCounter)
 }
 
