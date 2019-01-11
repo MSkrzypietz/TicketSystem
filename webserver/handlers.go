@@ -248,12 +248,19 @@ func ServeTicketAssignment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if the assignee is in the holidays (exception: assigner == assignee)
+	assigner := user.Username
+	assignee := r.PostFormValue("editor")
+	if assigner != assignee && usersMap[assignee].HolidayMode {
+		http.Redirect(w, r, utils.ErrorAssigneeInHoliday.ErrorPageURL(), http.StatusFound)
+		return
+	}
+
 	err = utils.ChangeEditor(ticketId, r.PostFormValue("editor"))
 	if err != nil {
 		http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		return
 	}
-
 	err = utils.ChangeStatus(ticketId, utils.TicketStatusInProcess)
 	if err != nil {
 		// Removing the editor before showing the error page

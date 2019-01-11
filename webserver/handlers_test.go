@@ -687,6 +687,46 @@ func TestServeTicketAssignmentInvalidEditor(t *testing.T) {
 	assert.Equal(t, utils.ErrorInvalidInputs.ErrorPageURL(), resultURL.Path)
 }
 
+func TestServeTicketAssignmentInvalidAssignee(t *testing.T) {
+	setup()
+	defer teardown()
+
+	createUser("TestEditor", "Aa!123456")
+	err := utils.SetUserHolidayMode("TestEditor", true)
+	assert.Nil(t, err)
+	testTicket, err := createDummyTicket()
+	assert.Nil(t, err)
+
+	form := url.Values{}
+	form.Add("editor", "TestEditor")
+
+	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Form = form
+
+	uuid := utils.CreateUUID(64)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    uuid,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	rr := httptest.NewRecorder()
+	createUser("Test123", "Aa!123456")
+	assert.Nil(t, loginUser(rr, "Test123", "Aa!123456", uuid))
+
+	handler := http.HandlerFunc(ServeTicketAssignment)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusFound)
+	resultURL, err := rr.Result().Location()
+	assert.Nil(t, err)
+	assert.Equal(t, utils.ErrorAssigneeInHoliday.ErrorPageURL(), resultURL.Path)
+}
+
 func TestServeTicketAssignmentInvalidTicketID(t *testing.T) {
 	setup()
 	defer teardown()

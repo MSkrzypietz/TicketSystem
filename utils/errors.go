@@ -17,6 +17,7 @@ const (
 	ErrorUserLogin
 	ErrorURLParsing
 	ErrorDataStoring
+	ErrorAssigneeInHoliday
 )
 
 // This is inspired by http://golang-basic.blogspot.com/2014/07/enumeration-example-golang.html
@@ -34,6 +35,7 @@ var errors = []string{
 	"We had issues signing you in. Please check your inputs and try it again!",
 	"We had issues parsing your URL. Please try it again!",
 	"We had issues storing your changes. Please try it again!",
+	"You cannot assign a ticket to an editor who is in the holidays!",
 }
 
 // Returns the error message for a particular error
