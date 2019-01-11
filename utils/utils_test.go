@@ -4,6 +4,8 @@ package utils
 
 import (
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -91,14 +93,6 @@ func TestCheckPasswdFormal(t *testing.T) {
 }
 
 func TestCheckEqualStrings(t *testing.T) {
-	str1 := ""
-	str2 := "hello"
-	str3 := "test"
-
-	assert.False(t, CheckEqualStrings(str1, str1))
-	assert.False(t, CheckEqualStrings(str2, str3))
-	assert.True(t, CheckEqualStrings(str3, str3))
-
 	tests := []struct {
 		a, b     string
 		expected bool
@@ -110,4 +104,46 @@ func TestCheckEqualStrings(t *testing.T) {
 	for _, d := range tests {
 		assert.Equal(t, d.expected, CheckEqualStrings(d.a, d.b))
 	}
+}
+
+func TestGetUserFromCookieSessionNotSet(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodGet, "/tickets/", nil)
+
+	_, err := GetUserFromCookie(req)
+	assert.NotNil(t, err)
+}
+
+func TestGetUserFromCookieSuccess(t *testing.T) {
+	setup()
+	defer teardown()
+
+	user1, err := CreateUser("Test123", "TestPassword")
+	assert.Nil(t, err)
+	user1.SessionID = "TestSession"
+	assert.Nil(t, LoginUser(user1.Username, "TestPassword", user1.SessionID))
+
+	req := httptest.NewRequest(http.MethodGet, "/tickets/", nil)
+	req.AddCookie(&http.Cookie{
+		Name:     "session-id",
+		Value:    user1.SessionID,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * 60,
+	})
+
+	user2, err := GetUserFromCookie(req)
+	assert.Nil(t, err)
+	assert.Equal(t, user1.Username, user2.Username)
+}
+
+func TestRemoveCookie(t *testing.T) {
+	rr := httptest.NewRecorder()
+	RemoveCookie(rr, "session-id")
+
+	assert.Equal(t, 1, len(rr.Result().Cookies()))
+	assert.Equal(t, "session-id", rr.Result().Cookies()[0].Name)
+	assert.Equal(t, "", rr.Result().Cookies()[0].Value)
 }
