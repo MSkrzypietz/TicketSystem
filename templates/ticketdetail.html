@@ -10,9 +10,9 @@
                                 <select class="form-control px-1 py-0" name="editor">
                                     {{range $index, $element := .Users}}
                                         {{if le $index 0}}
-                                            <option value="{{.}}">Me</option>
-                                        {{else}}
-                                            <option value="{{.}}">{{.}}</option>
+                                            <option value="{{$.Username}}">Me</option>
+                                        {{else if not .HolidayMode}}
+                                            <option value="{{.Username}}">{{.Username}}</option>
                                         {{end}}
                                     {{end}}
                                 </select>

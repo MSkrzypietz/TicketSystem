@@ -22,7 +22,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		ticketsData := utils.GetTicketsByStatus(utils.TicketStatusOpen)
 		ticketsData = append(ticketsData, utils.GetTicketsByStatus(utils.TicketStatusInProcess)...)
 
-		ctx := templateContext{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, Username: user.Username, TicketsData: ticketsData}
+		ctx := templateContext{HeaderTitle: "Tickets Overview", ContentTemplate: "tickets.html", IsSignedIn: true, IsUserInHoliday: user.HolidayMode, Username: user.Username, TicketsData: ticketsData}
 		executeTemplate(w, r, "index.html", ctx)
 		return
 	}
@@ -40,9 +40,9 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	delete(usersMap, user.Username)
-	usersList := []string{user.Username}
+	usersList := []utils.User{user} // it's important for the template that first element is the current user
 	for _, v := range usersMap {
-		usersList = append(usersList, v.Username)
+		usersList = append(usersList, v)
 	}
 
 	// TicketsData is used to display all possible tickets that can be merged, hence the current ticket gets removed
@@ -53,6 +53,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 			ticketsData = ticketsData[:len(ticketsData)-1]   // Removing the last ticket
 		}
 	}
+
 	ctx := templateContext{HeaderTitle: ticket.Reference, ContentTemplate: "ticketdetail.html", IsSignedIn: true, Username: user.Username, Users: usersList, TicketsData: ticketsData, CurrentTicket: ticket}
 	executeTemplate(w, r, "index.html", ctx)
 }

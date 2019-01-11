@@ -14,9 +14,10 @@ type templateContext struct {
 	HeaderTitle     string
 	ContentTemplate string
 	IsSignedIn      bool
+	IsUserInHoliday bool
 	ErrorMsg        string
 	Username        string
-	Users           []string
+	Users           []utils.User
 	TicketsData     []utils.Ticket
 	CurrentTicket   utils.Ticket
 }
