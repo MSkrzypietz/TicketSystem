@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,8 @@ type MailList struct {
 	MailIDCounter int    `xml:"MailIDCounter"`
 	MailList      []Mail `xml:"mails>mail"`
 }
+
+var mutexMailID = &sync.Mutex{}
 
 //creating or merging a ticket that was send by mail
 func CreateTicketFromMail(mail string, reference string, message string) (Ticket, error) {
@@ -48,6 +51,10 @@ func CreateTicketFromMail(mail string, reference string, message string) (Ticket
 
 //delete all mails in the xml file which are already sent
 func DeleteMails(mailIds []int) error {
+	// Synchronizing the change of the mail ID counter
+	mutexMailID.Lock()
+	defer mutexMailID.Unlock()
+
 	maillist, err := ReadMailsFile()
 	if err != nil {
 		return err
@@ -75,6 +82,10 @@ func DeleteMails(mailIds []int) error {
 
 //store the message as a mail in the specific xml file
 func SendMail(mail string, caption string, message string) error {
+	// Synchronizing the change of the mail ID counter
+	mutexMailID.Lock()
+	defer mutexMailID.Unlock()
+
 	maillist, err := ReadMailsFile()
 	if err != nil {
 		return err
