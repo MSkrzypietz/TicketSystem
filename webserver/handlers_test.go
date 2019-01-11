@@ -529,7 +529,7 @@ func TestServeAddCommentSuccessComment(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -567,7 +567,7 @@ func TestServeAddCommentSuccessEmail(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/addComment", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -662,7 +662,7 @@ func TestServeTicketAssignmentInvalidEditor(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -702,7 +702,7 @@ func TestServeTicketAssignmentInvalidAssignee(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -773,7 +773,7 @@ func TestServeTicketAssignmentSuccessWithoutRedirect(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -810,7 +810,7 @@ func TestServeTicketAssignmentSuccessWithRedirect(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/assignTicket", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -928,14 +928,14 @@ func TestServeTicketReleaseInvalidUser(t *testing.T) {
 
 	createUser("Test1234567", "Aa!123456")
 	testTicket, err := createDummyTicket()
-	assert.Nil(t, utils.ChangeEditor(testTicket.Id, "Test1234567"))
+	assert.Nil(t, utils.ChangeEditor(testTicket.ID, "Test1234567"))
 	assert.Nil(t, err)
 
 	form := url.Values{}
 
 	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -965,14 +965,14 @@ func TestServeTicketReleaseSuccess(t *testing.T) {
 	defer teardown()
 
 	testTicket, err := createDummyTicket()
-	assert.Nil(t, utils.ChangeEditor(testTicket.Id, "Test123"))
+	assert.Nil(t, utils.ChangeEditor(testTicket.ID, "Test123"))
 	assert.Nil(t, err)
 
 	form := url.Values{}
 
 	req := httptest.NewRequest(http.MethodPost, "/releaseTicket", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(testTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -1072,7 +1072,7 @@ func TestServeTicketsSuccess(t *testing.T) {
 	testTicket, err := createDummyTicket()
 	assert.Nil(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "/ticket/"+strconv.Itoa(testTicket.Id), nil)
+	req := httptest.NewRequest(http.MethodPost, "/ticket/"+strconv.Itoa(testTicket.ID), nil)
 
 	uuid := utils.CreateUUID(64)
 	req.AddCookie(&http.Cookie{
@@ -1148,7 +1148,7 @@ func TestServeCloseTicketSuccess(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/closeTicket", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/ticket/"+strconv.Itoa(testTicket.Id))
+	req.Header.Set("Referer", "/ticket/"+strconv.Itoa(testTicket.ID))
 
 	uuid := utils.CreateUUID(64)
 	req.AddCookie(&http.Cookie{
@@ -1223,11 +1223,11 @@ func TestServeMergeTicketsInvalidPostParam(t *testing.T) {
 
 	firstTicket, err := createDummyTicket()
 	assert.Nil(t, err)
-	err = utils.ChangeEditor(firstTicket.Id, "Test")
+	err = utils.ChangeEditor(firstTicket.ID, "Test")
 	assert.Nil(t, err)
 	secondTicket, err := createDummyTicket()
 	assert.Nil(t, err)
-	err = utils.ChangeEditor(secondTicket.Id, "Test2")
+	err = utils.ChangeEditor(secondTicket.ID, "Test2")
 	assert.Nil(t, err)
 
 	form := url.Values{}
@@ -1235,7 +1235,7 @@ func TestServeMergeTicketsInvalidPostParam(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -1266,19 +1266,19 @@ func TestServeMergeTicketsInvalidTickets(t *testing.T) {
 
 	firstTicket, err := createDummyTicket()
 	assert.Nil(t, err)
-	err = utils.ChangeEditor(firstTicket.Id, "Test")
+	err = utils.ChangeEditor(firstTicket.ID, "Test")
 	assert.Nil(t, err)
 	secondTicket, err := createDummyTicket()
 	assert.Nil(t, err)
-	err = utils.ChangeEditor(secondTicket.Id, "Test2") // wrong editor
+	err = utils.ChangeEditor(secondTicket.ID, "Test2") // wrong editor
 	assert.Nil(t, err)
 
 	form := url.Values{}
-	form.Add("ticket", strconv.Itoa(secondTicket.Id))
+	form.Add("ticket", strconv.Itoa(secondTicket.ID))
 
 	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)
@@ -1309,19 +1309,19 @@ func TestServeMergeTicketsSuccess(t *testing.T) {
 
 	firstTicket, err := createDummyTicket()
 	assert.Nil(t, err)
-	err = utils.ChangeEditor(firstTicket.Id, "Test")
+	err = utils.ChangeEditor(firstTicket.ID, "Test")
 	assert.Nil(t, err)
 	secondTicket, err := createDummyTicket()
 	assert.Nil(t, err)
-	err = utils.ChangeEditor(secondTicket.Id, "Test")
+	err = utils.ChangeEditor(secondTicket.ID, "Test")
 	assert.Nil(t, err)
 
 	form := url.Values{}
-	form.Add("ticket", strconv.Itoa(secondTicket.Id))
+	form.Add("ticket", strconv.Itoa(secondTicket.ID))
 
 	req := httptest.NewRequest(http.MethodPost, "/mergeTickets", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.Id))
+	req.Header.Set("Referer", "/tickets/"+strconv.Itoa(firstTicket.ID))
 	req.Form = form
 
 	uuid := utils.CreateUUID(64)

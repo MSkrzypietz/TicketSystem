@@ -58,7 +58,7 @@ func TestAddMessage(t *testing.T) {
 	tmpTicket, err := CreateTicket("client@dhbw.de", "PC problem", "PC does not start anymore. Any idea?")
 	assert.Nil(t, err)
 	expectedTicket, _ := AddMessage(tmpTicket, "4262", "please restart")
-	actTicket, err := ReadTicket(expectedTicket.Id)
+	actTicket, err := ReadTicket(expectedTicket.ID)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
 	actTicket.MessageList[1].CreationDate = expectedTicket.MessageList[1].CreationDate
@@ -83,7 +83,7 @@ func TestTicketReading(t *testing.T) {
 	setup()
 	defer teardown()
 
-	tmpTicket := Ticket{Id: 1}
+	tmpTicket := Ticket{ID: 1}
 	ticketMap[1] = tmpTicket
 	actTicket, _ := ReadTicket(1)
 	assert.Equal(t, tmpTicket, actTicket)
@@ -93,7 +93,7 @@ func TestTicketReading(t *testing.T) {
 	_, err := ReadTicket(1)
 	assert.NotNil(t, err)
 	expectedTicket, _ := CreateTicket("1234", "PC problem", "Pc does not start anymore")
-	actTicket, _ = ReadTicket(expectedTicket.Id)
+	actTicket, _ = ReadTicket(expectedTicket.ID)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
 	assert.Equal(t, expectedTicket, actTicket)
@@ -234,8 +234,8 @@ func TestMerging(t *testing.T) {
 
 	ticket, err := CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
 	assert.Nil(t, err)
-	assert.NotNil(t, MergeTickets(ticket.Id, 1337))
-	assert.NotNil(t, MergeTickets(1337, ticket.Id))
+	assert.NotNil(t, MergeTickets(ticket.ID, 1337))
+	assert.NotNil(t, MergeTickets(1337, ticket.ID))
 
 	_, err = CreateTicket("client@dhbw.de", "New employee", "Hello, please create a new login account for our new employee Max Mustermann. Thanks.")
 	assert.Nil(t, err)
@@ -243,13 +243,13 @@ func TestMerging(t *testing.T) {
 	assert.Nil(t, err)
 	firstTicket, _ := ReadTicket(getTicketIDCounter() - 1)
 	secondTicket, _ := ReadTicket(getTicketIDCounter())
-	err = ChangeStatus(firstTicket.Id, 1)
+	err = ChangeStatus(firstTicket.ID, 1)
 	assert.Nil(t, err)
-	err = ChangeStatus(secondTicket.Id, 1)
+	err = ChangeStatus(secondTicket.ID, 1)
 	assert.Nil(t, err)
-	err = ChangeEditor(firstTicket.Id, "202")
+	err = ChangeEditor(firstTicket.ID, "202")
 	assert.Nil(t, err)
-	err = ChangeEditor(secondTicket.Id, "202")
+	err = ChangeEditor(secondTicket.ID, "202")
 	assert.Nil(t, err)
 	firstTicket, _ = ReadTicket(getTicketIDCounter() - 1)
 	secondTicket, _ = ReadTicket(getTicketIDCounter())
@@ -260,10 +260,10 @@ func TestMerging(t *testing.T) {
 	for e := range secondTicket.MessageList {
 		msgList = append(msgList, secondTicket.MessageList[e])
 	}
-	expectedTicket := Ticket{XMLName: xml.Name{Space: "", Local: ""}, Id: firstTicket.Id, Client: firstTicket.Client, Reference: firstTicket.Reference, Status: firstTicket.Status, Editor: firstTicket.Editor, MessageList: msgList}
+	expectedTicket := Ticket{XMLName: xml.Name{Space: "", Local: ""}, ID: firstTicket.ID, Client: firstTicket.Client, Reference: firstTicket.Reference, Status: firstTicket.Status, Editor: firstTicket.Editor, MessageList: msgList}
 
-	assert.Nil(t, MergeTickets(firstTicket.Id, secondTicket.Id))
-	actTicket, _ := ReadTicket(firstTicket.Id)
+	assert.Nil(t, MergeTickets(firstTicket.ID, secondTicket.ID))
+	actTicket, _ := ReadTicket(firstTicket.ID)
 	actTicket.XMLName.Local = ""
 	assert.Equal(t, expectedTicket, actTicket)
 
@@ -273,7 +273,7 @@ func TestMerging(t *testing.T) {
 	secondTicketID := getTicketIDCounter()
 	err = ChangeEditor(secondTicketID, "412")
 	assert.Nil(t, err)
-	assert.NotNil(t, MergeTickets(firstTicket.Id, secondTicketID))
+	assert.NotNil(t, MergeTickets(firstTicket.ID, secondTicketID))
 }
 
 func TestCheckCache(t *testing.T) {
@@ -455,7 +455,7 @@ func TestSetUserHolidayMode(t *testing.T) {
 	assert.NotNil(t, SetUserHolidayMode("testUser", true))
 	config.DataPath = "datatest"
 	assert.NotNil(t, SetUserHolidayMode("testUser", true))
-	CreateUser("testUser", "test")
+	_, _ = CreateUser("testUser", "test")
 	assert.Nil(t, SetUserHolidayMode("testUser", true))
 	tmpUsers, _ := ReadUsers()
 	assert.True(t, tmpUsers["testUser"].HolidayMode)

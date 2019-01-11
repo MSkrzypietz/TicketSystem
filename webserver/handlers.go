@@ -48,7 +48,7 @@ func ServeTickets(w http.ResponseWriter, r *http.Request) {
 	// TicketsData is used to display all possible tickets that can be merged, hence the current ticket gets removed
 	ticketsData := utils.GetTicketsByEditor(user.Username)
 	for i, t := range ticketsData {
-		if t.Id == ticket.Id {
+		if t.ID == ticket.ID {
 			ticketsData[i] = ticketsData[len(ticketsData)-1] // Replacing it with the last ticket
 			ticketsData = ticketsData[:len(ticketsData)-1]   // Removing the last ticket
 		}
@@ -213,7 +213,7 @@ func ServeAddComment(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		}
 	} else {
-		err = utils.SendMail(ticket.Client, "Reply to your ticket (ID: "+strconv.Itoa(ticket.Id)+")", r.PostFormValue("comment"))
+		err = utils.SendMail(ticket.Client, "Reply to your ticket (ID: "+strconv.Itoa(ticket.ID)+")", r.PostFormValue("comment"))
 		if err != nil {
 			http.Redirect(w, r, utils.ErrorDataStoring.ErrorPageURL(), http.StatusFound)
 		}

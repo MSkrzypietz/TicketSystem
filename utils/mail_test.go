@@ -12,7 +12,7 @@ func TestCreateTicketFromMail(t *testing.T) {
 
 	expectedTicket, err := CreateTicketFromMail("mail@test", "testCaption", "testMsg")
 	assert.Nil(t, err)
-	actTicket, err := ReadTicket(expectedTicket.Id)
+	actTicket, err := ReadTicket(expectedTicket.ID)
 	assert.Nil(t, err)
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
@@ -21,10 +21,10 @@ func TestCreateTicketFromMail(t *testing.T) {
 	setup()
 
 	tmpTicket, _ := CreateTicket("test@mail", "testCaption", "testMsgOne")
-	assert.Nil(t, ChangeStatus(tmpTicket.Id, TicketStatusClosed))
+	assert.Nil(t, ChangeStatus(tmpTicket.ID, TicketStatusClosed))
 	expectedTicket, err = CreateTicketFromMail("test@mail", "testCaption", "testMsgTwo")
 	assert.Nil(t, err)
-	actTicket, err = ReadTicket(expectedTicket.Id)
+	actTicket, err = ReadTicket(expectedTicket.ID)
 	expectedTicket.XMLName.Local = ""
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate
@@ -36,7 +36,7 @@ func TestCreateTicketFromMail(t *testing.T) {
 	tmpTicket, _ = CreateTicket("test@mail", "testCaption", "testMsgOne")
 	expectedTicket, err = CreateTicketFromMail("test@mail", "testCaption", "testMsgTwo")
 	assert.Nil(t, err)
-	actTicket, err = ReadTicket(expectedTicket.Id)
+	actTicket, err = ReadTicket(expectedTicket.ID)
 	expectedTicket.XMLName.Local = ""
 	actTicket.XMLName.Local = ""
 	actTicket.MessageList[0].CreationDate = expectedTicket.MessageList[0].CreationDate

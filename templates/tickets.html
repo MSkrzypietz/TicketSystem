@@ -6,13 +6,12 @@
                         <input type="checkbox" name="holidayMode" {{if .IsUserInHoliday}}checked{{end}}>
                         <span class="slider round"></span>
                     </label>
-                </a>
                 <h3 class="ml-3 my-0 align-self-center">Holiday Mode</h3>
             </div>
         </form>
         <br>
         {{range .TicketsData}}
-            <a href={{print "/tickets/" .Id}}>
+            <a href={{print "/tickets/" .ID}}>
                 <div class="card card-cascade wider reverse">
                     <div class="card-body card-body-cascade text-center">
                         {{if eq .Editor $.Username}}

@@ -12,11 +12,10 @@ import (
 	"time"
 )
 
-// TODO: Perhaps add ,omitempty to xml definitions
 //struct that defines a ticket with the parameters ID, mail of the client, reference, actual status, editor and a list of all messages
 type Ticket struct {
 	XMLName     xml.Name  `xml:"Ticket"`
-	Id          int       `xml:"ID"`
+	ID          int       `xml:"ID"`
 	Client      string    `xml:"Client"`
 	Reference   string    `xml:"Reference"`
 	Status      int       `xml:"Status"`
@@ -120,7 +119,7 @@ func InitDataStorage() error {
 //function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns the ticket struct and an error whether the creation was successful.
 func CreateTicket(client string, reference string, text string) (Ticket, error) {
 	IDCounter := getTicketIDCounter() + 1
-	newTicket := Ticket{Id: IDCounter, Client: client, Reference: reference, Status: TicketStatusOpen}
+	newTicket := Ticket{ID: IDCounter, Client: client, Reference: reference, Status: TicketStatusOpen}
 	err := WriteToXML(IDCounter, config.DefinitionsFilePath())
 	if err != nil {
 		return Ticket{}, err
@@ -137,13 +136,13 @@ func AddMessage(ticket Ticket, actor string, text string) (Ticket, error) {
 
 //stores a ticket as xml file
 func StoreTicket(ticket Ticket) error {
-	delete(ticketMap, ticket.Id)
-	return WriteToXML(ticket, config.TicketXMLPath(ticket.Id))
+	delete(ticketMap, ticket.ID)
+	return WriteToXML(ticket, config.TicketXMLPath(ticket.ID))
 }
 
 //returns a ticket from the cache or from the corresponding xml file.
 func ReadTicket(id int) (Ticket, error) {
-	if ticketMap[id].Id != 0 {
+	if ticketMap[id].ID != 0 {
 		return ticketMap[id], nil
 	}
 
@@ -160,7 +159,7 @@ func ReadTicket(id int) (Ticket, error) {
 	if err != nil {
 		return Ticket{}, err
 	}
-	ticketMap[ticket.Id] = ticket
+	ticketMap[ticket.ID] = ticket
 	return ticket, nil
 }
 
@@ -205,7 +204,7 @@ func GetTicketsByStatus(status int) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
 		tmp, _ := ReadTicket(actualID)
-		if tmp.Status == status && tmp.Id != 0 {
+		if tmp.Status == status && tmp.ID != 0 {
 			tickets = append(tickets, tmp)
 		}
 	}
@@ -217,7 +216,7 @@ func GetTicketsByEditor(editor string) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
 		tmp, _ := ReadTicket(actualID)
-		if tmp.Editor == editor && tmp.Id != 0 {
+		if tmp.Editor == editor && tmp.ID != 0 {
 			tickets = append(tickets, tmp)
 		}
 	}
@@ -229,7 +228,7 @@ func GetTicketsByClient(client string) []Ticket {
 	var tickets []Ticket
 	for actualID := 1; actualID <= getTicketIDCounter(); actualID++ {
 		tmp, _ := ReadTicket(actualID)
-		if tmp.Client == client && tmp.Id != 0 {
+		if tmp.Client == client && tmp.ID != 0 {
 			tickets = append(tickets, tmp)
 		}
 	}
@@ -298,7 +297,7 @@ func checkCache() error {
 		tmpInt := 1
 		for _, tmpTicket := range ticketMap {
 			if tmpInt == randNumber {
-				delete(ticketMap, tmpTicket.Id)
+				delete(ticketMap, tmpTicket.ID)
 				return nil
 			}
 			tmpInt++
