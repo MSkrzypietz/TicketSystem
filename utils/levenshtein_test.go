@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+// Matrikelnummern: 6813128, 1665910, 7612558
+
 func TestCheckStringsDeviation(t *testing.T) {
 	tests := []struct {
 		a, b     string

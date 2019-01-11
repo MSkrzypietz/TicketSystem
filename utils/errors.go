@@ -1,5 +1,7 @@
 package utils
 
+// Matrikelnummern: 6813128, 1665910, 7612558
+
 import "strconv"
 
 type Error int

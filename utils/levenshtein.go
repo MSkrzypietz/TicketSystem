@@ -1,5 +1,7 @@
 package utils
 
+// Matrikelnummern: 6813128, 1665910, 7612558
+
 // Checks the similarity between two strings using the allowedDeviation with the levenshtein algorithm
 func CheckStringsDeviation(allowedDeviation int, a, b string) bool {
 	return levenshteinDistance(a, len(a), b, len(b)) <= allowedDeviation

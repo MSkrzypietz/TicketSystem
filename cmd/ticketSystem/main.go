@@ -1,5 +1,6 @@
-//TODO: Matrikelnummern in alle Dateien !!!!!
 package main
+
+// Matrikelnummern: 6813128, 1665910, 7612558
 
 import (
 	"TicketSystem/config"

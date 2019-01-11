@@ -1,5 +1,7 @@
 package main
 
+// Matrikelnummern: 6813128, 1665910, 7612558
+
 import (
 	"github.com/stretchr/testify/assert"
 	"net"
@@ -19,21 +21,19 @@ func TestCheckPortBoundaries(t *testing.T) {
 func TestCheckPortAvailability(t *testing.T) {
 	// Using port 0 returns a free / available port selected by the system
 	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		panic(err)
-	}
+	assert.Nil(t, err)
 	availablePort := listener.Addr().(*net.TCPAddr).Port
-	listener.Close()
+	err = listener.Close()
+	assert.Nil(t, err)
 
 	actual, err := checkPortAvailability(availablePort)
 	assert.True(t, actual)
 	assert.Nil(t, err)
 
 	listener, err = net.Listen("tcp", ":"+strconv.Itoa(availablePort))
-	if err != nil {
-		panic(err)
-	}
-	defer listener.Close()
+	assert.Nil(t, err)
+	err = listener.Close()
+	assert.Nil(t, err)
 
 	actual, err = checkPortAvailability(availablePort)
 	assert.False(t, actual)
