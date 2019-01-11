@@ -72,7 +72,7 @@ func TestTicketStoring(t *testing.T) {
 	actTicket, err := CreateTicket("1234", "PC problem", "Pc does not start anymore")
 	assert.Nil(t, err)
 	ticketMap[1] = actTicket
-	assert.Nil(t, DeleteTicket(1))
+	assert.Nil(t, deleteTicket(1))
 	assert.Equal(t, Ticket{}, ticketMap[1])
 	expectedTicket, err := ReadTicket(1)
 	assert.NotNil(t, err)
@@ -215,16 +215,15 @@ func TestDeleting(t *testing.T) {
 
 	_, err := CreateTicket("client@dhbw.de", "Computer", "PC not working")
 	assert.Nil(t, err)
-	err = DeleteTicket(1)
+	err = deleteTicket(1)
 	assert.Nil(t, err)
-	assert.Equal(t, 0, getTicketIDCounter())
-	err = DeleteTicket(11)
+	err = deleteTicket(11)
 	assert.NotNil(t, err)
 	_, err = CreateTicket("client@dhbw.de", "Computer", "PC not working")
 	assert.Nil(t, err)
-	err = DeleteTicket(1)
+	err = deleteTicket(2)
 	assert.Nil(t, err)
-	_, err = ReadTicket(1)
+	_, err = ReadTicket(2)
 	assert.NotNil(t, err)
 }
 

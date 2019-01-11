@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,8 @@ const (
 )
 
 var ticketMap = make(map[int]Ticket)
+
+var mutexTicketID = &sync.Mutex{}
 
 //struct for one user
 type User struct {
@@ -118,6 +121,10 @@ func InitDataStorage() error {
 
 //function to create a ticket including the following parameters: mail of the client, reference and text of the ticket. Returns the ticket struct and an error whether the creation was successful.
 func CreateTicket(client string, reference string, text string) (Ticket, error) {
+	// Synchronizing this method to prevent multiple tickets with the same ID
+	mutexTicketID.Lock()
+	defer mutexTicketID.Unlock()
+
 	IDCounter := getTicketIDCounter() + 1
 	newTicket := Ticket{ID: IDCounter, Client: client, Reference: reference, Status: TicketStatusOpen}
 	err := WriteToXML(IDCounter, config.DefinitionsFilePath())
@@ -164,14 +171,8 @@ func ReadTicket(id int) (Ticket, error) {
 }
 
 //deletes a ticket by its ID and returns an error whether it was successful.
-func DeleteTicket(id int) error {
+func deleteTicket(id int) error {
 	delete(ticketMap, id)
-	if id == getTicketIDCounter() {
-		err := WriteToXML(id-1, config.DefinitionsFilePath())
-		if err != nil {
-			return err
-		}
-	}
 	err := os.Remove(config.TicketXMLPath(id))
 	if err != nil {
 		return err
@@ -269,7 +270,7 @@ func MergeTickets(firstTicketID int, secondTicketID int) error {
 	if err != nil {
 		return err
 	}
-	err = DeleteTicket(secondTicketID)
+	err = deleteTicket(secondTicketID)
 	if err != nil {
 		return err
 	}
