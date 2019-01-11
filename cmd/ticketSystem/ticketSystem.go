@@ -37,6 +37,7 @@ func main() {
 		}
 	}
 
+	// Waiting for server to gracefully shut down before exiting the program
 	<-shutdown
 }
 

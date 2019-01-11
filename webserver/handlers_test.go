@@ -20,8 +20,6 @@ import (
 	"time"
 )
 
-// TODO: In jeder Testdatei anstelle assert.NotNil(t, err) -> assert.NoError(t, err)
-
 func setup() {
 	config.DataPath = "datatest"
 	config.TemplatePath = path.Join("..", "templates")
