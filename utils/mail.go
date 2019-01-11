@@ -84,7 +84,7 @@ func DeleteMails(mailIds []int) error {
 }
 
 // Stores the input as a mail which needs to be sent
-func SendMail(mail string, caption string, message string) error {
+func SendMail(mail string, subject string, message string) error {
 	// Synchronizing the change of the mail ID counter
 	mutexMailID.Lock()
 	defer mutexMailID.Unlock()
@@ -95,7 +95,7 @@ func SendMail(mail string, caption string, message string) error {
 	}
 
 	nextMailId := mailList.MailIDCounter + 1
-	newMail := Mail{Mail: mail, Subject: caption, Message: message, ID: nextMailId}
+	newMail := Mail{Mail: mail, Subject: subject, Message: message, ID: nextMailId}
 	mailList.MailList = append(mailList.MailList, newMail)
 	mailList.MailIDCounter = nextMailId
 
